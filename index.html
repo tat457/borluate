@@ -31,7 +31,7 @@
             touch-action: none;
         }
 
-        /* 正解・不正解ポップアップ用アニメーション */
+        /* ポップアップアニメーション */
         @keyframes pop-in {
             0% { transform: scale(0.5); opacity: 0; }
             70% { transform: scale(1.1); opacity: 1; }
@@ -39,6 +39,11 @@
         }
         .animate-pop {
             animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* 鏡像反転用スタイル */
+        .flip-horizontal {
+            transform: scaleX(-1);
         }
     </style>
 </head>
@@ -56,30 +61,25 @@
 
         <!-- 画面切替 & コンテンツ選択 -->
         <div class="flex items-center space-x-2 text-sm flex-wrap">
-            <!-- コンテンツタイプ (教育的配慮により名称をゲーム/学習用に調整) -->
             <select id="map-select" class="bg-slate-700 text-white rounded-lg px-3 py-1.5 border border-slate-600 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
-                <option value="japan">🗺️ 日本都道府県ゲーム</option>
+                <option value="japan">🗺️ 日本都道府県ゲーム (※主要11地域)</option>
                 <option value="zoo">🐯 動物園マップ</option>
                 <option value="math">🔢 さんすうターゲット</option>
             </select>
 
-            <!-- ゲームモード -->
             <select id="mode-select" class="bg-slate-700 text-white rounded-lg px-3 py-1.5 border border-slate-600 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
                 <option value="explore">🔍 じゆうに探検</option>
                 <option value="quiz">❓ クイズチャレンジ</option>
             </select>
 
-            <!-- 入力方式切り替え -->
             <button id="toggle-camera-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center space-x-1 shadow">
                 <span>📷 カメラ色検出: OFF</span>
             </button>
 
-            <!-- カメラ設定パネル開閉 -->
             <button id="open-settings-btn" class="bg-slate-700 hover:bg-slate-600 p-1.5 rounded-lg border border-slate-600 font-bold">
                 ⚙️ カメラ・校正設定
             </button>
 
-            <!-- フルスクリーン (プロジェクター用) -->
             <button id="fullscreen-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-3 py-1.5 rounded-lg transition shadow">
                 📺 全画面（投影）
             </button>
@@ -89,26 +89,25 @@
     <!-- メインコンテンツエリア (プロジェクター投影画面) -->
     <main id="stage-container" class="relative flex-1 w-full h-full overflow-hidden flex items-center justify-center projector-bg cursor-crosshair">
         
-        <!-- 背景マップ表示エリア (Canvas / SVG) -->
+        <!-- 背景マップ表示エリア (Canvas) -->
         <canvas id="map-canvas" class="absolute inset-0 w-full h-full z-0"></canvas>
 
         <!-- パーティクル＆ヒットエフェクト用キャンバス -->
         <canvas id="fx-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
 
-        <!-- クイズ案内バー & スコア (ターゲットに重ならない最上部に配置) -->
+        <!-- クイズ案内バー & スコア -->
         <div id="quiz-banner" class="hidden absolute top-2 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-900 px-6 py-2 rounded-2xl shadow-2xl z-20 border-2 border-white flex items-center space-x-6">
             <div>
                 <span class="text-[10px] font-black uppercase tracking-wider block text-slate-700 leading-none">もんだい</span>
                 <span id="quiz-question" class="text-xl font-black">さくらんぼの名産地「山形県」を狙おう！</span>
             </div>
-            <!-- スコア表示 -->
             <div id="score-display" class="bg-slate-900/90 text-amber-400 px-4 py-1 rounded-xl font-black text-lg border border-amber-300 flex items-center space-x-2">
                 <span class="text-xs text-slate-300">点数:</span>
                 <span id="score-val" class="text-2xl text-amber-300">0</span>
             </div>
         </div>
 
-        <!-- 正解 / 不正解（おしい！）の画面中央フィードバックポップアップ -->
+        <!-- フィードバックポップアップ -->
         <div id="feedback-toast" class="hidden absolute z-30 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 flex flex-col items-center">
             <div id="feedback-box" class="px-8 py-4 rounded-3xl shadow-2xl border-4 text-center animate-pop flex items-center space-x-4">
                 <span id="feedback-icon" class="text-6xl">🎉</span>
@@ -121,18 +120,16 @@
 
         <!-- 虫眼鏡 ＆ 情報ポップアップ -->
         <div id="magnifier-popup" class="absolute hidden z-20 transition-all duration-200 pointer-events-none flex flex-col items-center">
-            <!-- 虫眼鏡フレーム -->
             <div class="relative w-32 h-32 rounded-full border-4 border-amber-400 magnifier-lens bg-slate-900/80 overflow-hidden flex items-center justify-center shadow-2xl backdrop-blur-sm">
                 <span id="magnifier-icon" class="text-5xl animate-bounce">🍎</span>
             </div>
-            <!-- 情報カード -->
             <div class="mt-2 bg-white text-slate-900 px-5 py-2.5 rounded-2xl shadow-2xl border-2 border-amber-400 max-w-sm text-center">
                 <h3 id="info-title" class="text-lg font-black text-amber-600">山形県</h3>
                 <p id="info-desc" class="text-xs font-bold text-slate-700 mt-0.5">さくらんぼやラ・フランス、美味しい温泉がいっぱい！</p>
             </div>
         </div>
 
-        <!-- ボール検出の現在位置ポインター（カメラモード用Visual Feedback） -->
+        <!-- ボール検出の現在位置ポインター -->
         <div id="camera-pointer" class="hidden absolute w-10 h-10 -ml-5 -mt-5 rounded-full border-4 border-red-500 bg-red-500/30 pointer-events-none z-30 transition-all duration-75 flex items-center justify-center">
             <div class="w-3 h-3 bg-red-500 rounded-full"></div>
         </div>
@@ -144,36 +141,32 @@
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-amber-400 flex items-center space-x-2">
                     <span>⚙️</span>
-                    <span>カメラHSV検出 ＆ 4点歪み補正設定</span>
+                    <span>カメラHSV検出 ＆ 投影壁面4点キャリブレーション</span>
                 </h2>
                 <button id="close-settings-btn" class="text-slate-400 hover:text-white text-2xl font-bold">✕</button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- ① アスペクト比ズレを完全に防ぐ16:9固定のカメラプレビューコンテナ -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <label class="block text-xs font-bold text-amber-300">① 投影壁面の4隅（角）をドラッグして位置合わせ</label>
+                        <label class="block text-xs font-bold text-amber-300">① カメラ映像内の「プロジェクター投影壁の4隅」を指定</label>
                         <button id="reset-calib-btn" class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded text-slate-300 font-bold">リセット</button>
                     </div>
                     
-                    <!-- 16:9アスペクト比でカメラ実寸とピクセル完全一致 -->
-                    <div id="cam-preview-box" class="relative bg-black rounded-xl overflow-hidden border-2 border-slate-600 w-full aspect-video select-none">
-                        <video id="webcam" class="w-full h-full object-contain pointer-events-none" autoplay playsinline muted></video>
-                        <canvas id="camera-process-canvas" class="absolute inset-0 w-full h-full object-contain"></canvas>
+                    <div id="cam-preview-box" class="relative bg-black rounded-xl overflow-hidden border-2 border-slate-600 w-full select-none shadow-inner" style="aspect-ratio: 4/3;">
+                        <video id="webcam" class="w-full h-full object-fill pointer-events-none flip-horizontal" autoplay playsinline muted></video>
+                        <canvas id="camera-process-canvas" class="absolute inset-0 w-full h-full object-fill flip-horizontal"></canvas>
                         
-                        <!-- 4点透視キャリブレーションのドラッグ可能ピン -->
                         <div id="pin-0" class="calib-marker absolute w-7 h-7 -ml-3.5 -mt-3.5 bg-red-500 border-2 border-white rounded-full flex items-center justify-center text-xs font-black text-white shadow-lg z-10">1</div>
                         <div id="pin-1" class="calib-marker absolute w-7 h-7 -ml-3.5 -mt-3.5 bg-red-500 border-2 border-white rounded-full flex items-center justify-center text-xs font-black text-white shadow-lg z-10">2</div>
                         <div id="pin-2" class="calib-marker absolute w-7 h-7 -ml-3.5 -mt-3.5 bg-red-500 border-2 border-white rounded-full flex items-center justify-center text-xs font-black text-white shadow-lg z-10">3</div>
                         <div id="pin-3" class="calib-marker absolute w-7 h-7 -ml-3.5 -mt-3.5 bg-red-500 border-2 border-white rounded-full flex items-center justify-center text-xs font-black text-white shadow-lg z-10">4</div>
                     </div>
                     <p class="text-[11px] text-slate-400 mt-2">
-                        ※プロジェクター投影領域の**1:左上 2:右上 3:右下 4:左下**の角に赤ピンを合わせてください。
+                        ※カメラ画角内で壁に映っている投影画面の**1:左上 2:右上 3:右下 4:左下**の角にピンをあわせてください。
                     </p>
                 </div>
 
-                <!-- ② 検出パラメータ ＆ インパクト（衝突）パラメータ調整 -->
                 <div class="space-y-4 text-sm">
                     <div>
                         <label class="block text-xs font-bold text-amber-300 mb-1">② 検出ターゲットカラー指定（HSV方式）</label>
@@ -181,7 +174,7 @@
                             <div id="selected-color-box" class="w-10 h-10 rounded-lg border-2 border-white bg-red-600 shadow shrink-0"></div>
                             <div>
                                 <span id="selected-color-val" class="font-mono text-slate-200 text-xs font-bold block">H:0° S:85% V:90%</span>
-                                <span class="text-[10px] text-slate-400">（映像のボールをクリックして色を指定）</span>
+                                <span class="text-[10px] text-slate-400">（映像内のボールをクリックして色を選択）</span>
                             </div>
                         </div>
                     </div>
@@ -200,15 +193,15 @@
                             <span id="sens-val" class="text-amber-400">5</span>
                         </div>
                         <input id="impact-sensitivity" type="range" min="1" max="10" value="5" class="w-full accent-amber-400">
-                        <p class="text-[10px] text-slate-400 mt-0.5">※「ボールの高速飛翔 → 壁面での急停止 ＋ 潰れ拡大ピーク」を正確に衝突検知します。</p>
+                        <p class="text-[10px] text-slate-400 mt-0.5">※壁面投影エリアへの到達・急止・ボールのつぶれを複合判定します。</p>
                     </div>
 
                     <div>
                         <div class="flex justify-between text-xs font-bold mb-1">
-                            <span class="text-slate-300">最小認識サイズ (ピクセル数)</span>
-                            <span id="min-area-val" class="text-amber-400">15 px</span>
+                            <span class="text-slate-300">ボール最小検出面積</span>
+                            <span id="min-area-val" class="text-amber-400">60 px</span>
                         </div>
-                        <input id="min-area" type="range" min="5" max="100" value="15" class="w-full accent-amber-400">
+                        <input id="min-area" type="range" min="10" max="300" value="60" class="w-full accent-amber-400">
                     </div>
 
                     <div class="pt-2 border-t border-slate-700">
@@ -220,8 +213,8 @@
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-end">
-                <button id="save-settings-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-black px-6 py-2 rounded-xl transition">
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="save-settings-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-black px-6 py-2 rounded-xl transition shadow">
                     設定を保存して閉じる
                 </button>
             </div>
@@ -229,14 +222,23 @@
     </div>
 
     <script>
-        // Web Audio API による効果音生成エンジン (正解・ヒット・失敗音)
+        // Web Audio API による効果音生成エンジン
         class SoundFX {
             constructor() {
-                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.ctx = null;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
             }
 
             playHit() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
+                this.init();
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 
@@ -255,7 +257,7 @@
             }
 
             playCorrect() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
+                this.init();
                 const now = this.ctx.currentTime;
                 [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
                     const osc = this.ctx.createOscillator();
@@ -272,7 +274,7 @@
             }
 
             playWrong() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
+                this.init();
                 const now = this.ctx.currentTime;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
@@ -290,7 +292,7 @@
 
         const sound = new SoundFX();
 
-        // マップ定義 (ターゲット領域の拡大 & 位置調整)
+        // 🔴 修正：num6 の val: 5 -> val: 6 に正しく修正
         const MAP_DATASETS = {
             japan: [
                 { id: 'hokkaido', name: '北海道', icon: '🐻', desc: '広大な自然！美味しいカニとスープカレー！', x: 0.81, y: 0.22, radius: 0.11 },
@@ -330,7 +332,6 @@
             ]
         };
 
-        // 4点ホモグラフィ（透視変換）計算エンジン
         class Homography {
             static solveLinearSystem(A, B) {
                 const n = B.length;
@@ -342,6 +343,8 @@
                     [A[i], A[maxRow]] = [A[maxRow], A[i]];
                     [B[i], B[maxRow]] = [B[maxRow], B[i]];
 
+                    if (Math.abs(A[i][i]) < 1e-10) continue;
+
                     for (let k = i + 1; k < n; k++) {
                         const c = -A[k][i] / A[i][i];
                         for (let j = i; j < n; j++) {
@@ -352,11 +355,13 @@
                     }
                 }
 
-                const x = new Array(n);
+                const x = new Array(n).fill(0);
                 for (let i = n - 1; i >= 0; i--) {
                     let sum = 0;
                     for (let j = i + 1; j < n; j++) sum += A[i][j] * x[j];
-                    x[i] = (B[i] - sum) / A[i][i];
+                    if (Math.abs(A[i][i]) > 1e-10) {
+                        x[i] = (B[i] - sum) / A[i][i];
+                    }
                 }
                 return x;
             }
@@ -389,19 +394,29 @@
                 const ty = (H[1][0] * x + H[1][1] * y + H[1][2]) / denom;
                 return { x: tx, y: ty };
             }
+
+            // 点(x, y)が校正四角形（ポリゴン）内にあるかチェック
+            static isPointInPolygon(pt, poly) {
+                let inside = false;
+                for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+                    const xi = poly[i].x, yi = poly[i].y;
+                    const xj = poly[j].x, yj = poly[j].y;
+                    const intersect = ((yi > pt.y) !== (yj > pt.y)) &&
+                        (pt.x < (xj - xi) * (pt.y - yi) / (yj - yi) + xi);
+                    if (intersect) inside = !inside;
+                }
+                return inside;
+            }
         }
 
-        // RGBからHSV(Hue, Saturation, Value)への高速変換ユーティリティ
         function rgbToHsv(r, g, b) {
             r /= 255; g /= 255; b /= 255;
             const max = Math.max(r, g, b), min = Math.min(r, g, b);
-            let h, s, v = max;
+            let h = 0, s = 0, v = max;
             const d = max - min;
             s = max === 0 ? 0 : d / max;
 
-            if (max === min) {
-                h = 0;
-            } else {
+            if (max !== min) {
                 switch (max) {
                     case r: h = (g - b) / d + (g < b ? 6 : 0); break;
                     case g: h = (b - r) / d + 2; break;
@@ -412,29 +427,25 @@
             return { h: Math.round(h * 360), s: Math.round(s * 100), v: Math.round(v * 100) };
         }
 
-        // アプリケーション状態
+        // 状態変数定義
         let currentMapKey = 'japan';
         let currentGameMode = 'explore';
         let score = 0;
         let currentQuizTarget = null;
         let particles = [];
 
-        // 4点校正座標（0.0〜1.0）
         let calibPins = [
-            { x: 0.05, y: 0.05 }, // 1: 左上
-            { x: 0.95, y: 0.05 }, // 2: 右上
-            { x: 0.95, y: 0.95 }, // 3: 右下
-            { x: 0.05, y: 0.95 }  // 4: 左下
+            { x: 0.05, y: 0.05 },
+            { x: 0.95, y: 0.05 },
+            { x: 0.95, y: 0.95 },
+            { x: 0.05, y: 0.95 }
         ];
 
-        // ホモグラフィ行列のキャッシュ
         let cachedHomographyMatrix = null;
-
-        // ボールの追跡履歴（運動解析用）
-        let ballHistory = []; // {x, y, area, time}
+        let ballHistory = [];
         let lastHitTime = 0;
+        let lastCamProcessTime = 0;
 
-        // DOM要素参照
         const mapCanvas = document.getElementById('map-canvas');
         const mapCtx = mapCanvas.getContext('2d');
         const fxCanvas = document.getElementById('fx-canvas');
@@ -456,11 +467,35 @@
         const feedbackTitle = document.getElementById('feedback-title');
         const feedbackSub = document.getElementById('feedback-sub');
 
+        const video = document.getElementById('webcam');
+        const processCanvas = document.getElementById('camera-process-canvas');
+        const processCtx = processCanvas.getContext('2d');
+        const cameraPointer = document.getElementById('camera-pointer');
+
+        const toggleCameraBtn = document.getElementById('toggle-camera-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const hToleranceInput = document.getElementById('h-tolerance');
+        const hTolVal = document.getElementById('h-tol-val');
+        const impactSensInput = document.getElementById('impact-sensitivity');
+        const sensVal = document.getElementById('sens-val');
+        const minAreaInput = document.getElementById('min-area');
+        const minAreaVal = document.getElementById('min-area-val');
+
+        const selectedColorBox = document.getElementById('selected-color-box');
+        const selectedColorVal = document.getElementById('selected-color-val');
+        const flipCameraCheck = document.getElementById('flip-camera-check');
+
+        // 🔴 修正①：左右反転（鏡像モード）を正確に考慮したホモグラフィー行列の構築
         function updateHomographyMatrix() {
             const vw = video.videoWidth || 640;
             const vh = video.videoHeight || 480;
 
-            const srcQuad = calibPins.map(p => ({ x: p.x * vw, y: p.y * vh }));
+            const isFlipped = flipCameraCheck.checked;
+            const srcQuad = calibPins.map(p => ({
+                x: (isFlipped ? (1.0 - p.x) : p.x) * vw,
+                y: p.y * vh
+            }));
+
             const dstQuad = [
                 { x: 0, y: 0 },
                 { x: stageContainer.clientWidth, y: 0 },
@@ -469,6 +504,52 @@
             ];
 
             cachedHomographyMatrix = Homography.getHomographyMatrix(srcQuad, dstQuad);
+        }
+
+        // 🔴 修正⑬：キャリブレーション・カラー設定の LocalStorage 保存 & 復元機能
+        function saveSettings() {
+            const settings = {
+                calibPins,
+                targetHsv,
+                hTolerance: hToleranceInput.value,
+                impactSensitivity: impactSensInput.value,
+                minArea: minAreaInput.value,
+                flipCamera: flipCameraCheck.checked
+            };
+            localStorage.setItem('wakuwaku_map_settings', JSON.stringify(settings));
+            showFeedbackToast(true, '設定を保存しました', '次回の起動時にも引き継がれます');
+        }
+
+        function loadSettings() {
+            const data = localStorage.getItem('wakuwaku_map_settings');
+            if (!data) return;
+            try {
+                const s = JSON.parse(data);
+                if (s.calibPins) calibPins = s.calibPins;
+                if (s.targetHsv) targetHsv = s.targetHsv;
+                if (s.hTolerance) { hToleranceInput.value = s.hTolerance; hTolVal.textContent = `±${s.hTolerance}°`; }
+                if (s.impactSensitivity) { impactSensInput.value = s.impactSensitivity; sensVal.textContent = s.impactSensitivity; }
+                if (s.minArea) { minAreaInput.value = s.minArea; minAreaVal.textContent = `${s.minArea} px`; }
+                if (s.flipCamera !== undefined) {
+                    flipCameraCheck.checked = s.flipCamera;
+                    toggleVideoFlipUI(s.flipCamera);
+                }
+                
+                selectedColorBox.style.backgroundColor = `hsl(${targetHsv.h}, ${targetHsv.s}%, ${targetHsv.v}%)`;
+                selectedColorVal.textContent = `H:${targetHsv.h}° S:${targetHsv.s}% V:${targetHsv.v}%`;
+            } catch(e) {
+                console.error('Failed to load settings from localStorage', e);
+            }
+        }
+
+        function toggleVideoFlipUI(isFlipped) {
+            if (isFlipped) {
+                video.classList.add('flip-horizontal');
+                processCanvas.classList.add('flip-horizontal');
+            } else {
+                video.classList.remove('flip-horizontal');
+                processCanvas.classList.remove('flip-horizontal');
+            }
         }
 
         function resizeCanvases() {
@@ -498,7 +579,7 @@
             ctx.shadowColor = '#059669';
             ctx.shadowBlur = 18;
 
-            // 1. 北海道
+            // 北海道
             ctx.beginPath();
             ctx.moveTo(w * 0.72, h * 0.22);
             ctx.lineTo(w * 0.75, h * 0.26);
@@ -509,11 +590,9 @@
             ctx.lineTo(w * 0.86, h * 0.08);
             ctx.lineTo(w * 0.77, h * 0.10);
             ctx.lineTo(w * 0.72, h * 0.16);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+            ctx.closePath(); ctx.fill(); ctx.stroke();
 
-            // 2. 本州
+            // 本州
             ctx.beginPath();
             ctx.moveTo(w * 0.77, h * 0.29);
             ctx.lineTo(w * 0.81, h * 0.35);
@@ -531,22 +610,18 @@
             ctx.lineTo(w * 0.65, h * 0.44);
             ctx.lineTo(w * 0.71, h * 0.35);
             ctx.lineTo(w * 0.74, h * 0.29);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+            ctx.closePath(); ctx.fill(); ctx.stroke();
 
-            // 3. 四国
+            // 四国
             ctx.beginPath();
             ctx.moveTo(w * 0.42, h * 0.68);
             ctx.lineTo(w * 0.51, h * 0.67);
             ctx.lineTo(w * 0.52, h * 0.73);
             ctx.lineTo(w * 0.45, h * 0.76);
             ctx.lineTo(w * 0.40, h * 0.72);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+            ctx.closePath(); ctx.fill(); ctx.stroke();
 
-            // 4. 九州
+            // 九州
             ctx.beginPath();
             ctx.moveTo(w * 0.27, h * 0.65);
             ctx.lineTo(w * 0.34, h * 0.66);
@@ -554,11 +629,9 @@
             ctx.lineTo(w * 0.30, h * 0.84);
             ctx.lineTo(w * 0.24, h * 0.82);
             ctx.lineTo(w * 0.22, h * 0.72);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+            ctx.closePath(); ctx.fill(); ctx.stroke();
 
-            // 5. 沖縄（拡大枠）
+            // 沖縄
             ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([4, 4]);
@@ -579,9 +652,7 @@
             ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
             ctx.strokeStyle = '#34d399';
             ctx.lineWidth = 2;
-            ctx.fill();
-            ctx.stroke();
-
+            ctx.fill(); ctx.stroke();
             ctx.restore();
         }
 
@@ -608,8 +679,7 @@
                 ctx.lineWidth = 2;
                 ctx.beginPath();
                 ctx.roundRect(x, y, width, height, 16);
-                ctx.fill();
-                ctx.stroke();
+                ctx.fill(); ctx.stroke();
 
                 ctx.font = 'bold 14px "M PLUS Rounded 1c"';
                 ctx.fillStyle = '#fef08a';
@@ -626,14 +696,12 @@
             ctx.fillStyle = '#fbbf24';
             ctx.textAlign = 'center';
             ctx.fillText('動物園 案内マップ', w * 0.5, h * 0.06);
-
             ctx.restore();
         }
 
         function drawStage() {
             const w = mapCanvas.width;
             const h = mapCanvas.height;
-
             mapCtx.clearRect(0, 0, w, h);
 
             if (currentMapKey === 'japan') {
@@ -645,16 +713,10 @@
                 mapCtx.lineWidth = 2;
                 const step = 60;
                 for (let x = 0; x < w; x += step) {
-                    mapCtx.beginPath();
-                    mapCtx.moveTo(x, 0);
-                    mapCtx.lineTo(x, h);
-                    mapCtx.stroke();
+                    mapCtx.beginPath(); mapCtx.moveTo(x, 0); mapCtx.lineTo(x, h); mapCtx.stroke();
                 }
                 for (let y = 0; y < h; y += step) {
-                    mapCtx.beginPath();
-                    mapCtx.moveTo(0, y);
-                    mapCtx.lineTo(w, y);
-                    mapCtx.stroke();
+                    mapCtx.beginPath(); mapCtx.moveTo(0, y); mapCtx.lineTo(w, y); mapCtx.stroke();
                 }
             }
 
@@ -688,14 +750,12 @@
                 const angle = Math.random() * Math.PI * 2;
                 const speed = Math.random() * 10 + 3;
                 particles.push({
-                    x: x,
-                    y: y,
+                    x: x, y: y,
                     vx: Math.cos(angle) * speed,
                     vy: Math.sin(angle) * speed,
                     size: Math.random() * 10 + 4,
                     color: `hsl(${Math.random() * 60 + 30}, 100%, 60%)`,
-                    alpha: 1,
-                    life: 1
+                    alpha: 1, life: 1
                 });
             }
         }
@@ -759,27 +819,33 @@
                 }
             }
 
-            if (hitItem) {
-                magnifierIcon.textContent = hitItem.icon;
-                infoTitle.textContent = hitItem.name;
-                infoDesc.textContent = hitItem.desc;
+            if (currentGameMode === 'quiz') {
+                if (hitItem && currentQuizTarget && hitItem.id === currentQuizTarget.id) {
+                    magnifierIcon.textContent = hitItem.icon;
+                    infoTitle.textContent = hitItem.name;
+                    infoDesc.textContent = hitItem.desc;
+                    magnifierPopup.style.left = `${Math.min(Math.max(x, 150), w - 150)}px`;
+                    magnifierPopup.style.top = `${Math.min(Math.max(y - 80, 100), h - 220)}px`;
+                    magnifierPopup.classList.remove('hidden');
 
-                magnifierPopup.style.left = `${Math.min(Math.max(x, 150), w - 150)}px`;
-                magnifierPopup.style.top = `${Math.min(Math.max(y - 80, 100), h - 220)}px`;
-                magnifierPopup.classList.remove('hidden');
-
-                if (currentGameMode === 'quiz' && currentQuizTarget) {
-                    if (hitItem.id === currentQuizTarget.id) {
-                        sound.playCorrect();
-                        score += 10;
-                        scoreVal.textContent = score;
-                        showFeedbackToast(true, 'だいせいかい！', '+10てん ゲット！');
-                        setTimeout(() => { nextQuiz(); }, 1800);
-                    } else {
-                        // ⑨ クイズ誤答時（おしい！もう一回！）の明確なフィードバックを追加
-                        sound.playWrong();
-                        showFeedbackToast(false, 'おしい！', 'もういちど ねらってみよう！');
-                    }
+                    sound.playCorrect();
+                    score += 10;
+                    scoreVal.textContent = score;
+                    showFeedbackToast(true, 'だいせいかい！', '+10てん ゲット！');
+                    setTimeout(() => { nextQuiz(); }, 1800);
+                } else {
+                    magnifierPopup.classList.add('hidden');
+                    sound.playWrong();
+                    showFeedbackToast(false, 'おしい！', 'もういちど ねらってみよう！');
+                }
+            } else {
+                if (hitItem) {
+                    magnifierIcon.textContent = hitItem.icon;
+                    infoTitle.textContent = hitItem.name;
+                    infoDesc.textContent = hitItem.desc;
+                    magnifierPopup.style.left = `${Math.min(Math.max(x, 150), w - 150)}px`;
+                    magnifierPopup.style.top = `${Math.min(Math.max(y - 80, 100), h - 220)}px`;
+                    magnifierPopup.classList.remove('hidden');
                 }
             }
         }
@@ -799,7 +865,7 @@
                     3: ['「 1 + 2 」の答えは？', '「 9 ÷ 3 」の答えは？'],
                     4: ['「 2 + 2 」の答えは？', '「 2 × 2 」の答えは？'],
                     5: ['「 2 + 3 」の答えは？', '「 15 ÷ 3 」の答えは？'],
-                    6: ['「 3 + 3 」の答えは？', '「 2 × 3 」の答えは？'],
+                    6: ['「 3 + 3 」の答えは？', '「 12 ÷ 2 」の答えは？', '「 2 × 3 」の答えは？'],
                     7: ['「 4 + 3 」の答えは？', '「 14 ÷ 2 」の答えは？'],
                     8: ['「 4 + 4 」の答えは？', '「 2 × 4 」の答えは？'],
                     9: ['「 5 + 4 」の答えは？', '「 3 × 3 」の答えは？'],
@@ -813,6 +879,7 @@
         }
 
         stageContainer.addEventListener('pointerdown', (e) => {
+            sound.init();
             const rect = stageContainer.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -821,28 +888,12 @@
 
         let isCameraActive = false;
         let videoStream = null;
-        let targetHsv = { h: 0, s: 85, v: 90 }; // デフォルト赤色HSV
-
-        const video = document.getElementById('webcam');
-        const processCanvas = document.getElementById('camera-process-canvas');
-        const processCtx = processCanvas.getContext('2d');
-        const cameraPointer = document.getElementById('camera-pointer');
-
-        const toggleCameraBtn = document.getElementById('toggle-camera-btn');
-        const settingsModal = document.getElementById('settings-modal');
-        const hToleranceInput = document.getElementById('h-tolerance');
-        const hTolVal = document.getElementById('h-tol-val');
-        const impactSensInput = document.getElementById('impact-sensitivity');
-        const sensVal = document.getElementById('sens-val');
-        const minAreaInput = document.getElementById('min-area');
-        const minAreaVal = document.getElementById('min-area-val');
-
-        const selectedColorBox = document.getElementById('selected-color-box');
-        const selectedColorVal = document.getElementById('selected-color-val');
-        const flipCameraCheck = document.getElementById('flip-camera-check');
+        let cameraAnimationId = null;
+        let targetHsv = { h: 0, s: 85, v: 90 };
 
         hToleranceInput.addEventListener('input', (e) => hTolVal.textContent = `±${e.target.value}°`);
         impactSensInput.addEventListener('input', (e) => sensVal.textContent = e.target.value);
+        // 🟡 修正⑦：最小検出面積の表示・スライダー文言との一貫化
         minAreaInput.addEventListener('input', (e) => minAreaVal.textContent = `${e.target.value} px`);
 
         async function initCamera() {
@@ -851,121 +902,249 @@
                     video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
                 });
                 video.srcObject = videoStream;
+                
+                video.onloadedmetadata = () => {
+                    const vw = video.videoWidth || 640;
+                    const vh = video.videoHeight || 480;
+                    const previewBox = document.getElementById('cam-preview-box');
+                    if (previewBox) {
+                        previewBox.style.aspectRatio = `${vw}/${vh}`;
+                    }
+                    processCanvas.width = vw;
+                    processCanvas.height = vh;
+                    
+                    updateHomographyMatrix();
+                    updatePinPositions();
+                };
+
                 isCameraActive = true;
                 toggleCameraBtn.classList.replace('bg-blue-600', 'bg-emerald-600');
                 toggleCameraBtn.innerHTML = '<span>📷 カメラ色検出: ON</span>';
                 document.getElementById('game-status-badge').textContent = 'カメラ壁面認識中';
                 document.getElementById('game-status-badge').className = 'bg-blue-500/20 text-blue-300 text-xs px-2.5 py-1 rounded-full font-bold border border-blue-500/30';
                 
-                updateHomographyMatrix();
-                requestAnimationFrame(processCameraFrame);
+                processCameraFrame();
             } catch (err) {
-                alert('カメラの起動に失敗しました。アクセス許可を確認してください。');
+                alert('カメラの起動に失敗しました。カメラパーミッションを確認してください。');
                 console.error(err);
             }
         }
 
+        // 🟢 修正⑪：カメラ停止時の history およびヒット状態の初期化
         function stopCamera() {
+            isCameraActive = false;
+            if (cameraAnimationId) {
+                cancelAnimationFrame(cameraAnimationId);
+                cameraAnimationId = null;
+            }
             if (videoStream) {
                 videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
             }
-            isCameraActive = false;
+            video.srcObject = null;
+            cameraPointer.classList.add('hidden');
+
+            ballHistory.length = 0;
+            lastHitTime = 0;
+
             toggleCameraBtn.classList.replace('bg-emerald-600', 'bg-blue-600');
             toggleCameraBtn.innerHTML = '<span>📷 カメラ色検出: OFF</span>';
-            cameraPointer.classList.add('hidden');
             document.getElementById('game-status-badge').textContent = 'マウス/タッチモード';
             document.getElementById('game-status-badge').className = 'bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-1 rounded-full font-bold border border-emerald-500/30';
         }
 
-        // カメラフレーム処理（⑥ HSV高精度判定 ＆ ②③「移動速度急減＋面積最大」本物衝突検知）
-        function processCameraFrame() {
-            if (!isCameraActive) return;
+        let maskBuffer = null;
+        let visitedBuffer = null;
 
-            const vw = video.videoWidth || 640;
-            const vh = video.videoHeight || 480;
-            processCanvas.width = vw;
-            processCanvas.height = vh;
+        function findLargestBlob(data, vw, vh, targetHsv, hTol) {
+            const step = 4;
+            const cols = Math.floor(vw / step);
+            const rows = Math.floor(vh / step);
+            const total = cols * rows;
 
-            processCtx.drawImage(video, 0, 0, vw, vh);
-            const frame = processCtx.getImageData(0, 0, vw, vh);
-            const data = frame.data;
+            if (!maskBuffer || maskBuffer.length !== total) {
+                maskBuffer = new Uint8Array(total);
+                visitedBuffer = new Uint8Array(total);
+            } else {
+                maskBuffer.fill(0);
+                visitedBuffer.fill(0);
+            }
 
-            const hTol = parseInt(hToleranceInput.value);
-            const minArea = parseInt(minAreaInput.value);
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const px = c * step;
+                    const py = r * step;
+                    const idx = (py * vw + px) * 4;
+                    const red = data[idx], green = data[idx + 1], blue = data[idx + 2];
 
-            let sumX = 0;
-            let sumY = 0;
-            let count = 0;
+                    if (red > 50 || green > 50 || blue > 50) {
+                        const hsv = rgbToHsv(red, green, blue);
+                        let hDiff = Math.abs(hsv.h - targetHsv.h);
+                        if (hDiff > 180) hDiff = 360 - hDiff;
 
-            // ⑥ HSV色空間での高速比較処理
-            for (let i = 0; i < data.length; i += 16) {
-                const r = data[i], g = data[i + 1], b = data[i + 2];
-
-                // ざっくり事前RGBフィルタで高速化
-                if (r > 60 || g > 60 || b > 60) {
-                    const hsv = rgbToHsv(r, g, b);
-                    let hDiff = Math.abs(hsv.h - targetHsv.h);
-                    if (hDiff > 180) hDiff = 360 - hDiff; // 0度と360度の巡回考慮
-
-                    if (hDiff <= hTol && hsv.s >= 40 && hsv.v >= 25) {
-                        const pixelIdx = i / 4;
-                        sumX += pixelIdx % vw;
-                        sumY += Math.floor(pixelIdx / vw);
-                        count++;
+                        if (hDiff <= hTol && hsv.s >= 40 && hsv.v >= 25) {
+                            maskBuffer[r * cols + c] = 1;
+                        }
                     }
                 }
             }
 
+            let largestBlob = null;
+            let maxPixelCount = 0;
+            const queue = new Int32Array(total);
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    const index = r * cols + c;
+                    if (maskBuffer[index] === 1 && visitedBuffer[index] === 0) {
+                        let blobSumX = 0, blobSumY = 0, count = 0;
+                        let minX = c, maxX = c, minY = r, maxY = r;
+
+                        let head = 0, tail = 0;
+                        queue[tail++] = index;
+                        visitedBuffer[index] = 1;
+
+                        while (head < tail) {
+                            const currIdx = queue[head++];
+                            const cr = Math.floor(currIdx / cols);
+                            const cc = currIdx % cols;
+
+                            const realX = cc * step + step / 2;
+                            const realY = cr * step + step / 2;
+
+                            blobSumX += realX;
+                            blobSumY += realY;
+                            count++;
+
+                            if (cc < minX) minX = cc;
+                            if (cc > maxX) maxX = cc;
+                            if (cr < minY) minY = cr;
+                            if (cr > maxY) maxY = cr;
+
+                            if (cr > 0) {
+                                const nIdx = (cr - 1) * cols + cc;
+                                if (maskBuffer[nIdx] === 1 && visitedBuffer[nIdx] === 0) {
+                                    visitedBuffer[nIdx] = 1; queue[tail++] = nIdx;
+                                }
+                            }
+                            if (cr < rows - 1) {
+                                const nIdx = (cr + 1) * cols + cc;
+                                if (maskBuffer[nIdx] === 1 && visitedBuffer[nIdx] === 0) {
+                                    visitedBuffer[nIdx] = 1; queue[tail++] = nIdx;
+                                }
+                            }
+                            if (cc > 0) {
+                                const nIdx = cr * cols + (cc - 1);
+                                if (maskBuffer[nIdx] === 1 && visitedBuffer[nIdx] === 0) {
+                                    visitedBuffer[nIdx] = 1; queue[tail++] = nIdx;
+                                }
+                            }
+                            if (cc < cols - 1) {
+                                const nIdx = cr * cols + (cc + 1);
+                                if (maskBuffer[nIdx] === 1 && visitedBuffer[nIdx] === 0) {
+                                    visitedBuffer[nIdx] = 1; queue[tail++] = nIdx;
+                                }
+                            }
+                        }
+
+                        const bw = (maxX - minX + 1) * step;
+                        const bh = (maxY - minY + 1) * step;
+                        const aspectRatio = bw / Math.max(1, bh);
+
+                        if (count > maxPixelCount && aspectRatio >= 0.4 && aspectRatio <= 2.5) {
+                            maxPixelCount = count;
+                            largestBlob = {
+                                cx: blobSumX / count,
+                                cy: blobSumY / count,
+                                area: count * step * step,
+                                width: bw,
+                                height: bh
+                            };
+                        }
+                    }
+                }
+            }
+
+            return largestBlob;
+        }
+
+        // 🟡 修正⑦：カメラ処理を約30FPSに制限して低スペックPCの負荷軽減
+        function processCameraFrame(timestamp) {
+            if (!isCameraActive) return;
+
+            if (timestamp && timestamp - lastCamProcessTime < 33) {
+                cameraAnimationId = requestAnimationFrame(processCameraFrame);
+                return;
+            }
+            lastCamProcessTime = timestamp || performance.now();
+
+            const vw = video.videoWidth || 640;
+            const vh = video.videoHeight || 480;
+
+            processCtx.drawImage(video, 0, 0, vw, vh);
+            const frame = processCtx.getImageData(0, 0, vw, vh);
+
+            const hTol = parseInt(hToleranceInput.value);
+            const minArea = parseInt(minAreaInput.value);
+
+            const ballBlob = findLargestBlob(frame.data, vw, vh, targetHsv, hTol);
             const now = Date.now();
 
-            if (count >= minArea) {
-                let rawX = sumX / count;
-                let rawY = sumY / count;
+            // 🟡 修正⑦：ballBlob.area >= minArea への直感的一貫処理
+            if (ballBlob && ballBlob.area >= minArea) {
+                // 原カメラ画像座標系での位置
+                const rawX = ballBlob.cx;
+                const rawY = ballBlob.cy;
 
-                if (flipCameraCheck.checked) {
-                    rawX = vw - rawX;
+                const isFlipped = flipCameraCheck.checked;
+                const calibPolyInCamCoords = calibPins.map(p => ({
+                    x: (isFlipped ? (1.0 - p.x) : p.x) * vw,
+                    y: p.y * vh
+                }));
+
+                const isInsideProjectionArea = Homography.isPointInPolygon({ x: rawX, y: rawY }, calibPolyInCamCoords);
+
+                // 🟠 修正④：投影壁面エリア外に出た場合は履歴をクリアして進入時の誤反応を防止
+                if (!isInsideProjectionArea) {
+                    ballHistory.length = 0;
+                } else {
+                    ballHistory.push({ x: rawX, y: rawY, area: ballBlob.area, time: now });
+                    if (ballHistory.length > 8) ballHistory.shift();
                 }
 
-                // ボール中心位置と面積の履歴保持 (最大6フレーム)
-                ballHistory.push({ x: rawX, y: rawY, area: count, time: now });
-                if (ballHistory.length > 6) ballHistory.shift();
-
-                // ② & ③ 「移動速度急減 ＋ 壁面潰れ（面積拡大ピーク）」の本物衝突アルゴリズム
                 let isImpact = false;
-                if (ballHistory.length >= 4) {
-                    const prev = ballHistory[ballHistory.length - 2];
+                if (isInsideProjectionArea && ballHistory.length >= 4) {
                     const curr = ballHistory[ballHistory.length - 1];
-                    const past = ballHistory[0];
+                    const prev = ballHistory[ballHistory.length - 2];
+                    const past = ballHistory[Math.max(0, ballHistory.length - 4)];
 
-                    // 1. 直前までの移動速度 (px/ms)
-                    const travelDist = Math.hypot(curr.x - past.x, curr.y - past.y);
-                    const timeDiff = curr.time - past.time || 1;
-                    const velocity = travelDist / timeDiff;
+                    const dt1 = Math.max(1, prev.time - past.time);
+                    const dt2 = Math.max(1, curr.time - prev.time);
 
-                    // 2. 直近での減速・静止度合（急停止）
-                    const recentMove = Math.hypot(curr.x - prev.x, curr.y - prev.y);
-
-                    // 3. 面積急増量
-                    const areaGrowth = curr.area - prev.area;
+                    const speedBefore = Math.hypot(prev.x - past.x, prev.y - past.y) / dt1;
+                    const speedAfter = Math.hypot(curr.x - prev.x, curr.y - prev.y) / dt2;
+                    const speedDrop = speedBefore > 0 ? speedAfter / speedBefore : 1;
+                    const areaGrowthRatio = prev.area > 0 ? curr.area / prev.area : 1;
 
                     const sens = parseInt(impactSensInput.value);
-                    const stopThreshold = (11 - sens) * 1.8; // 許容停止距離
+                    const reqSpeedBefore = 0.10 + (10 - sens) * 0.02;
+                    const reqSpeedDrop = 0.50;
+                    // 🟠 修正⑤：面積増加の閾値を 1.05 から 1.15 (15%増) に引き上げて誤検出防止
+                    const reqAreaGrowth = 1.15;
 
-                    // 条件: 高速移動から壁面で急停止し、かつ面積がピークに達した瞬間
-                    if (recentMove < stopThreshold && (areaGrowth > 3 || velocity > 0.15)) {
+                    if (speedBefore > reqSpeedBefore && speedDrop < reqSpeedDrop && areaGrowthRatio >= reqAreaGrowth) {
                         isImpact = true;
                     }
                 }
 
-                // ホモグラフィ座標変換
+                // 🔴 修正①：反転に依存しない正確なホモグラフィー座標変換
                 const mappedPt = Homography.transformPoint({ x: rawX, y: rawY }, cachedHomographyMatrix);
 
                 cameraPointer.style.left = `${mappedPt.x}px`;
                 cameraPointer.style.top = `${mappedPt.y}px`;
                 cameraPointer.classList.remove('hidden');
 
-                // 衝突ヒット判定 (クールダウン 0.8秒)
-                if (isImpact && (now - lastHitTime > 800)) {
+                if (isImpact && (now - lastHitTime > 700)) {
                     handleHit(mappedPt.x, mappedPt.y);
                     lastHitTime = now;
                 }
@@ -975,7 +1154,7 @@
             }
 
             drawCalibOverlay(processCtx, vw, vh);
-            requestAnimationFrame(processCameraFrame);
+            cameraAnimationId = requestAnimationFrame(processCameraFrame);
         }
 
         function drawCalibOverlay(ctx, w, h) {
@@ -994,7 +1173,6 @@
             ctx.restore();
         }
 
-        // ① プレビュー用アスペクト比固定枠上でのピン移動操作
         const camPreviewBox = document.getElementById('cam-preview-box');
         let activePinIdx = null;
 
@@ -1021,8 +1199,8 @@
                 let x = (e.clientX - rect.left) / rect.width;
                 let y = (e.clientY - rect.top) / rect.height;
                 calibPins[idx] = {
-                    x: Math.min(Math.max(x, 0), 1),
-                    y: Math.min(Math.max(y, 0), 1)
+                    x: Math.min(Math.max(x, 0.01), 0.99),
+                    y: Math.min(Math.max(y, 0.01), 0.99)
                 };
                 updatePinPositions();
             });
@@ -1042,8 +1220,12 @@
 
         processCanvas.addEventListener('click', (e) => {
             const rect = processCanvas.getBoundingClientRect();
-            const clickX = Math.floor((e.clientX - rect.left) * (processCanvas.width / rect.width));
+            let clickX = Math.floor((e.clientX - rect.left) * (processCanvas.width / rect.width));
             const clickY = Math.floor((e.clientY - rect.top) * (processCanvas.height / rect.height));
+
+            if (flipCameraCheck.checked) {
+                clickX = processCanvas.width - clickX;
+            }
 
             const pixelData = processCtx.getImageData(clickX, clickY, 1, 1).data;
             targetHsv = rgbToHsv(pixelData[0], pixelData[1], pixelData[2]);
@@ -1052,7 +1234,14 @@
             selectedColorVal.textContent = `H:${targetHsv.h}° S:${targetHsv.s}% V:${targetHsv.v}%`;
         });
 
+        // 🔴 修正①：左右反転チェックボックスのアクション
+        flipCameraCheck.addEventListener('change', (e) => {
+            toggleVideoFlipUI(e.target.checked);
+            updateHomographyMatrix();
+        });
+
         toggleCameraBtn.addEventListener('click', () => {
+            sound.init();
             if (isCameraActive) stopCamera();
             else initCamera();
         });
@@ -1067,6 +1256,7 @@
         });
 
         document.getElementById('save-settings-btn').addEventListener('click', () => {
+            saveSettings();
             settingsModal.classList.add('hidden');
         });
 
@@ -1092,8 +1282,8 @@
             }
         });
 
-        // フルスクリーン切り替え
         document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            sound.init();
             try {
                 const doc = document;
                 const docEl = document.documentElement;
@@ -1114,26 +1304,17 @@
                                           doc.msFullscreenElement;
 
                 if (!fullscreenElement) {
-                    if (requestFS) {
-                        const res = requestFS.call(docEl);
-                        if (res && typeof res.catch === 'function') {
-                            res.catch((err) => console.log('Fullscreen failed:', err));
-                        }
-                    }
+                    if (requestFS) requestFS.call(docEl);
                 } else {
-                    if (exitFS) {
-                        const res = exitFS.call(doc);
-                        if (res && typeof res.catch === 'function') {
-                            res.catch((err) => console.log('Exit fullscreen failed:', err));
-                        }
-                    }
+                    if (exitFS) exitFS.call(doc);
                 }
             } catch (err) {
-                console.warn('Fullscreen operation failed:', err);
+                console.warn('Fullscreen request error:', err);
             }
         });
 
         window.onload = () => {
+            loadSettings();
             resizeCanvases();
             updateAndDrawParticles();
             updatePinPositions();
