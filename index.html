@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>わくわくインタラクティブマップ - ボール投げて遊ぼう！</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* アニメーション */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+
+        .pulse-effect {
+            animation: pulse-ring 0.8s cubic-bezier(0.215, 0.61, 0.355, 1) forwards;
+        }
+
+        /* 虫眼鏡風グラフィック */
+        .magnifier-lens {
+            box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.9), 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* プロジェクター用ダークUI */
+        .projector-bg {
+            background: radial-gradient(circle, #1a1c2e 0%, #0f101d 100%);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white h-screen w-screen flex flex-col">
+
+    <!-- ヘッダー / コントロールバー -->
+    <header class="bg-slate-800/90 border-b border-slate-700 px-4 py-2 flex items-center justify-between z-30 flex-wrap gap-2">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">🎯</span>
+            <h1 class="text-xl font-bold tracking-wide text-amber-400">わくわくインタラクティブ壁マップ</h1>
+            <span id="game-status-badge" class="bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-1 rounded-full font-bold border border-emerald-500/30">
+                マウス/タッチモード
+            </span>
+        </div>
+
+        <!-- 画面切替 & コンテンツ選択 -->
+        <div class="flex items-center space-x-2 text-sm flex-wrap">
+            <!-- コンテンツタイプ -->
+            <select id="map-select" class="bg-slate-700 text-white rounded-lg px-3 py-1.5 border border-slate-600 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
+                <option value="japan">🗺️ 日本全国マップ</option>
+                <option value="zoo">🐯 動物園マップ</option>
+                <option value="math">🔢 さんすうターゲット</option>
+            </select>
+
+            <!-- ゲームモード -->
+            <select id="mode-select" class="bg-slate-700 text-white rounded-lg px-3 py-1.5 border border-slate-600 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
+                <option value="explore">🔍 じゆうに探検</option>
+                <option value="quiz">❓ クイズチャレンジ</option>
+            </select>
+
+            <!-- 入力方式切り替え -->
+            <button id="toggle-camera-btn" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-3 py-1.5 rounded-lg transition flex items-center space-x-1 shadow">
+                <span>📷 カメラ色検出: OFF</span>
+            </button>
+
+            <!-- カメラ設定パネル開閉 -->
+            <button id="open-settings-btn" class="bg-slate-700 hover:bg-slate-600 p-1.5 rounded-lg border border-slate-600">
+                ⚙️ 設定
+            </button>
+
+            <!-- フルスクリーン (プロジェクター用) -->
+            <button id="fullscreen-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-3 py-1.5 rounded-lg transition shadow">
+                📺 全画面（投影）
+            </button>
+        </div>
+    </header>
+
+    <!-- メインコンテンツエリア (プロジェクター投影画面) -->
+    <main id="stage-container" class="relative flex-1 w-full h-full overflow-hidden flex items-center justify-center projector-bg cursor-crosshair">
+        
+        <!-- 背景マップ表示エリア (Canvas / SVG) -->
+        <canvas id="map-canvas" class="absolute inset-0 w-full h-full z-0"></canvas>
+
+        <!-- パーティクル＆ヒットエフェクト用キャンバス -->
+        <canvas id="fx-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
+
+        <!-- クイズ案内バー & スコア (クイズモード時：上部にスリム配置してターゲットと重ならないよう修正) -->
+        <div id="quiz-banner" class="hidden absolute top-3 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-900 px-6 py-2 rounded-2xl shadow-2xl z-20 border-2 border-white flex items-center space-x-4">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider block text-slate-700 leading-none">もんだい</span>
+                <span id="quiz-question" class="text-xl font-black">さくらんぼの名産地「山形県」を狙おう！</span>
+            </div>
+            <!-- スコア表示をバナー内に統合して画面を広く確保 -->
+            <div id="score-display" class="bg-slate-900/90 text-amber-400 px-3 py-1 rounded-xl font-black text-lg border border-amber-300 flex items-center space-x-1">
+                <span class="text-xs text-slate-300">点数:</span>
+                <span id="score-val" class="text-2xl">0</span>
+            </div>
+        </div>
+
+        <!-- 虫眼鏡 ＆ 情報ポップアップ (ボールが当たった場所) -->
+        <div id="magnifier-popup" class="absolute hidden z-20 transition-all duration-300 pointer-events-none flex flex-col items-center">
+            <!-- 虫眼鏡フレーム -->
+            <div class="relative w-36 h-36 rounded-full border-4 border-amber-400 magnifier-lens bg-slate-900/80 overflow-hidden flex items-center justify-center shadow-2xl backdrop-blur-sm">
+                <span id="magnifier-icon" class="text-6xl animate-bounce">🍎</span>
+            </div>
+            <!-- 情報カード -->
+            <div class="mt-3 bg-white text-slate-900 px-6 py-3 rounded-2xl shadow-2xl border-2 border-amber-400 max-w-sm text-center transform scale-105">
+                <h3 id="info-title" class="text-xl font-black text-amber-600">山形県</h3>
+                <p id="info-desc" class="text-sm font-bold text-slate-700 mt-1">さくらんぼやラ・フランス、美味しい温泉がいっぱい！</p>
+            </div>
+        </div>
+
+        <!-- ボール検出の現在位置ポインター（カメラモード用Visual Feedback） -->
+        <div id="camera-pointer" class="hidden absolute w-8 h-8 rounded-full border-4 border-red-500 bg-red-500/30 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 transition-all duration-75">
+            <div class="w-2 h-2 bg-red-500 rounded-full absolute inset-0 m-auto"></div>
+        </div>
+    </main>
+
+    <!-- Webカメラ設定・調整モーダル -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-amber-400 flex items-center space-x-2">
+                    <span>📷</span>
+                    <span>カメラボール検出設定</span>
+                </h2>
+                <button id="close-settings-btn" class="text-slate-400 hover:text-white text-2xl font-bold">✕</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- カメラ映像プレビュー & 検出マスク -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 mb-2">カメラ入力 & 検出対象（クリックで検出色を選択）</label>
+                    <div class="relative bg-black rounded-xl overflow-hidden border border-slate-700 aspect-video">
+                        <video id="webcam" class="w-full h-full object-cover" autoplay playsinline muted></video>
+                        <canvas id="camera-process-canvas" class="absolute inset-0 w-full h-full opacity-50"></canvas>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-2">
+                        ※壁に投げあてる「ボールの色（例：赤）」を画面内でクリックして指定してください。
+                    </p>
+                </div>
+
+                <!-- 検出パラメータ調整 -->
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <label class="block text-slate-300 font-bold mb-1">検出カラー (RGB)</label>
+                        <div class="flex items-center space-x-3">
+                            <div id="selected-color-box" class="w-10 h-10 rounded-lg border-2 border-white bg-red-600 shadow"></div>
+                            <span id="selected-color-val" class="font-mono text-slate-300">R:255 G:0 B:0</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-300 font-bold mb-1">感度 / 許容範囲 (Tolerance)</label>
+                        <input id="color-tolerance" type="range" min="10" max="120" value="45" class="w-full accent-amber-400">
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-300 font-bold mb-1">最小認識サイズ (ピクセル数)</label>
+                        <input id="min-area" type="range" min="5" max="100" value="15" class="w-full accent-amber-400">
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-700">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <input id="flip-camera-check" type="checkbox" checked class="w-4 h-4 text-amber-500 rounded">
+                            <span class="text-slate-300 font-bold">カメラ映像を左右反転 (鏡像)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button id="save-settings-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-6 py-2 rounded-xl transition">
+                    完了して決定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio API による効果音生成エンジン
+        class SoundFX {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            playHit() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.15);
+                
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+                
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.15);
+            }
+
+            playCorrect() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, now + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + idx * 0.08);
+                    osc.stop(now + idx * 0.08 + 0.2);
+                });
+            }
+        }
+
+        const sound = new SoundFX();
+
+        // マップの定義（座標は相対値 0.0 ~ 1.0 / 半径 radius を大きく拡大して当てやすく調整）
+        const MAP_DATASETS = {
+            japan: [
+                { id: 'hokkaido', name: '北海道', icon: '🐻', desc: '広大な自然！美味しいカニとスープカレー！', x: 0.82, y: 0.22, radius: 0.09 },
+                { id: 'aomori', name: '青森県', icon: '🍎', desc: 'リンゴの生産量日本一！ねぶた祭りが有名！', x: 0.78, y: 0.35, radius: 0.07 },
+                { id: 'yamagata', name: '山形県', icon: '🍒', desc: 'さくらんぼと将棋駒、美味しい芋煮が有名！', x: 0.72, y: 0.44, radius: 0.07 },
+                { id: 'miyagi', name: '宮城県', icon: '🍡', desc: '牛タンやずんだ餅、仙台城跡（伊達政宗）があるよ！', x: 0.81, y: 0.45, radius: 0.07 },
+                { id: 'tokyo', name: '東京都', icon: '🗼', desc: '日本の首都！東京タワーやスカイツリー！', x: 0.71, y: 0.62, radius: 0.07 },
+                { id: 'aichi', name: '愛知県', icon: '🏯', desc: '名古屋城や手羽先、自動車産業が盛んだよ！', x: 0.60, y: 0.64, radius: 0.07 },
+                { id: 'osaka', name: '大阪府', icon: '🐙', desc: 'たこ焼きとお笑いの街！大きな大阪城も！', x: 0.51, y: 0.67, radius: 0.07 },
+                { id: 'hiroshima', name: '広島県', icon: '🍁', desc: '世界遺産の厳島神社とお好み焼きが有名！', x: 0.41, y: 0.67, radius: 0.07 },
+                { id: 'kagawa', name: '香川県', icon: '🍜', desc: 'うどん県！コシのある讃岐うどんが絶品！', x: 0.47, y: 0.76, radius: 0.07 },
+                { id: 'fukuoka', name: '福岡県', icon: '🍜', desc: '博多ラーメンや明太子、屋台文化が賑やか！', x: 0.28, y: 0.74, radius: 0.07 },
+                { id: 'okinawa', name: '沖縄県', icon: '🌺', desc: 'エメラルドグリーンのきれいな海と首里城！', x: 0.13, y: 0.86, radius: 0.07 }
+            ],
+            zoo: [
+                { id: 'tiger', name: 'スマトラトラ', icon: '🐅', desc: '絶滅危惧種の貴重なトラ！動物園の大人気スター！', x: 0.22, y: 0.28, radius: 0.11 },
+                { id: 'polarbear', name: 'ホッキョクグマ', icon: '🐻‍❄️', desc: 'ダイナミックなダイブが見られる大きなプールがあるよ！', x: 0.44, y: 0.28, radius: 0.11 },
+                { id: 'elephant', name: 'アフリカゾウ', icon: '🐘', desc: '大きな耳と立派なキバ！ダイナミックなゾウ舎！', x: 0.66, y: 0.28, radius: 0.11 },
+                { id: 'giraffe', name: 'キリン', icon: '🦒', desc: 'サバンナエリアをゆったり歩く、首の長い人気者！', x: 0.85, y: 0.33, radius: 0.11 },
+                { id: 'redpanda', name: 'レッサーパンダ', icon: '🦝', desc: 'ふれあいの丘で大人気！フワフワの尻尾と愛くるしい姿！', x: 0.20, y: 0.72, radius: 0.11 },
+                { id: 'capybara', name: 'カピバラ', icon: '🦫', desc: 'のんびり屋さんの人気者！ふれあい広場で癒されよう！', x: 0.45, y: 0.72, radius: 0.11 },
+                { id: 'hippo', name: 'カバ', icon: '🦛', desc: '大きな水槽でのびのび泳ぐ迫力満点のカバ！', x: 0.72, y: 0.70, radius: 0.11 }
+            ],
+            math: [
+                { id: 'num1', name: '「 1 」', icon: '1️⃣', desc: '大せいかい！「1」をゲット！', x: 0.16, y: 0.26, radius: 0.085, val: 1 },
+                { id: 'num2', name: '「 2 」', icon: '2️⃣', desc: '大せいかい！「2」をゲット！', x: 0.38, y: 0.26, radius: 0.085, val: 2 },
+                { id: 'num3', name: '「 3 」', icon: '3️⃣', desc: '大せいかい！「3」をゲット！', x: 0.62, y: 0.26, radius: 0.085, val: 3 },
+                { id: 'num4', name: '「 4 」', icon: '4️⃣', desc: '大せいかい！「4」をゲット！', x: 0.84, y: 0.26, radius: 0.085, val: 4 },
+                { id: 'num5', name: '「 5 」', icon: '5️⃣', desc: '大せいかい！「5」をゲット！', x: 0.16, y: 0.55, radius: 0.085, val: 5 },
+                { id: 'num6', name: '「 6 」', icon: '6️⃣', desc: '大せいかい！「6」をゲット！', x: 0.38, y: 0.55, radius: 0.085, val: 6 },
+                { id: 'num7', name: '「 7 」', icon: '7️⃣', desc: '大せいかい！「7」をゲット！', x: 0.62, y: 0.55, radius: 0.085, val: 7 },
+                { id: 'num8', name: '「 8 」', icon: '8️⃣', desc: '大せいかい！「8」をゲット！', x: 0.84, y: 0.55, radius: 0.085, val: 8 },
+                { id: 'num9', name: '「 9 」', icon: '9️⃣', desc: '大せいかい！「9」をゲット！', x: 0.16, y: 0.82, radius: 0.085, val: 9 },
+                { id: 'num10', name: '「 10 」', icon: '🔟', desc: '大せいかい！「10」をゲット！', x: 0.38, y: 0.82, radius: 0.085, val: 10 },
+                { id: 'num12', name: '「 12 」', icon: '1️⃣2️⃣', desc: '大せいかい！「12」をゲット！', x: 0.62, y: 0.82, radius: 0.085, val: 12 },
+                { id: 'num15', name: '「 15 」', icon: '1️⃣5️⃣', desc: '大せいかい！「15」をゲット！', x: 0.84, y: 0.82, radius: 0.085, val: 15 }
+            ]
+        };
+
+        // アプリケーション状態
+        let currentMapKey = 'japan';
+        let currentGameMode = 'explore';
+        let score = 0;
+        let currentQuizTarget = null;
+        let particles = [];
+
+        // DOM要素
+        const mapCanvas = document.getElementById('map-canvas');
+        const mapCtx = mapCanvas.getContext('2d');
+        const fxCanvas = document.getElementById('fx-canvas');
+        const fxCtx = fxCanvas.getContext('2d');
+        const stageContainer = document.getElementById('stage-container');
+
+        const magnifierPopup = document.getElementById('magnifier-popup');
+        const magnifierIcon = document.getElementById('magnifier-icon');
+        const infoTitle = document.getElementById('info-title');
+        const infoDesc = document.getElementById('info-desc');
+
+        const quizBanner = document.getElementById('quiz-banner');
+        const quizQuestion = document.getElementById('quiz-question');
+        const scoreDisplay = document.getElementById('score-display');
+        const scoreVal = document.getElementById('score-val');
+
+        function resizeCanvases() {
+            const w = stageContainer.clientWidth;
+            const h = stageContainer.clientHeight;
+            mapCanvas.width = w;
+            mapCanvas.height = h;
+            fxCanvas.width = w;
+            fxCanvas.height = h;
+            drawStage();
+        }
+
+        window.addEventListener('resize', resizeCanvases);
+
+        function drawJapanMapOutline(ctx, w, h) {
+            ctx.save();
+            
+            // 海の深みグラデーション背景
+            const oceanGrad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, Math.max(w, h));
+            oceanGrad.addColorStop(0, '#0f172a');
+            oceanGrad.addColorStop(1, '#020617');
+            ctx.fillStyle = oceanGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            // 陸地の描画スタイル
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.2)'; // エメラルドグリーン（透明感）
+            ctx.strokeStyle = '#34d399'; // ネオン風グリーンライン
+            ctx.lineWidth = 3;
+            ctx.shadowColor = '#059669';
+            ctx.shadowBlur = 15;
+
+            // 1. 北海道
+            ctx.beginPath();
+            ctx.moveTo(w * 0.72, h * 0.22);
+            ctx.lineTo(w * 0.75, h * 0.26);
+            ctx.lineTo(w * 0.72, h * 0.28);
+            ctx.lineTo(w * 0.79, h * 0.27);
+            ctx.lineTo(w * 0.88, h * 0.23);
+            ctx.lineTo(w * 0.92, h * 0.16);
+            ctx.lineTo(w * 0.86, h * 0.08);
+            ctx.lineTo(w * 0.77, h * 0.10);
+            ctx.lineTo(w * 0.72, h * 0.16);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 2. 本州（能登半島・紀伊半島・下北半島含む）
+            ctx.beginPath();
+            ctx.moveTo(w * 0.77, h * 0.29); // 下北半島
+            ctx.lineTo(w * 0.81, h * 0.35); // 三陸海岸
+            ctx.lineTo(w * 0.80, h * 0.44); // 福島・茨城
+            ctx.lineTo(w * 0.75, h * 0.52); // 千葉・房総半島
+            ctx.lineTo(w * 0.70, h * 0.58); // 伊豆半島
+            ctx.lineTo(w * 0.63, h * 0.62); // 紀伊半島
+            ctx.lineTo(w * 0.55, h * 0.63);
+            ctx.lineTo(w * 0.45, h * 0.65); // 山口・中国地方
+            ctx.lineTo(w * 0.38, h * 0.63);
+            ctx.lineTo(w * 0.40, h * 0.59);
+            ctx.lineTo(w * 0.48, h * 0.58);
+            ctx.lineTo(w * 0.56, h * 0.49); // 能登半島
+            ctx.lineTo(w * 0.60, h * 0.52);
+            ctx.lineTo(w * 0.65, h * 0.44); // 新潟・日本海沿岸
+            ctx.lineTo(w * 0.71, h * 0.35); // 秋田・山形
+            ctx.lineTo(w * 0.74, h * 0.29);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 3. 四国
+            ctx.beginPath();
+            ctx.moveTo(w * 0.42, h * 0.68);
+            ctx.lineTo(w * 0.51, h * 0.67);
+            ctx.lineTo(w * 0.52, h * 0.73);
+            ctx.lineTo(w * 0.45, h * 0.76);
+            ctx.lineTo(w * 0.40, h * 0.72);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 4. 九州
+            ctx.beginPath();
+            ctx.moveTo(w * 0.27, h * 0.65); // 福岡
+            ctx.lineTo(w * 0.34, h * 0.66); // 大分
+            ctx.lineTo(w * 0.35, h * 0.76); // 宮崎
+            ctx.lineTo(w * 0.30, h * 0.84); // 鹿児島
+            ctx.lineTo(w * 0.24, h * 0.82); // 熊本・長崎
+            ctx.lineTo(w * 0.22, h * 0.72);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            // 5. 沖縄（拡大枠）
+            ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.strokeRect(w * 0.05, h * 0.75, w * 0.16, h * 0.18);
+            ctx.setLineDash([]);
+            
+            ctx.font = 'bold 12px "M PLUS Rounded 1c"';
+            ctx.fillStyle = '#fbbf24';
+            ctx.textAlign = 'center';
+            ctx.fillText('沖縄県 (拡大)', w * 0.13, h * 0.78);
+
+            // 沖縄本島
+            ctx.beginPath();
+            ctx.moveTo(w * 0.09, h * 0.87);
+            ctx.lineTo(w * 0.16, h * 0.82);
+            ctx.lineTo(w * 0.17, h * 0.84);
+            ctx.lineTo(w * 0.10, h * 0.89);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+            ctx.strokeStyle = '#34d399';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // 八木山動物公園風マップ描画
+        function drawYagiyamaZooMap(ctx, w, h) {
+            ctx.save();
+
+            // 緑豊かな公園の背景グラデーション
+            const bgGrad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, Math.max(w, h));
+            bgGrad.addColorStop(0, '#1c3d2b');
+            bgGrad.addColorStop(1, '#0d1f15');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, w, h);
+
+            // 園内遊歩道の描画
+            ctx.strokeStyle = 'rgba(217, 180, 114, 0.25)';
+            ctx.lineWidth = 26;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+
+            // メイン通り
+            ctx.beginPath();
+            ctx.moveTo(w * 0.08, h * 0.48); // 西門
+            ctx.lineTo(w * 0.33, h * 0.48);
+            ctx.lineTo(w * 0.55, h * 0.48);
+            ctx.lineTo(w * 0.92, h * 0.48); // 東門
+            ctx.stroke();
+
+            // ループ小道
+            ctx.beginPath();
+            ctx.moveTo(w * 0.33, h * 0.48);
+            ctx.lineTo(w * 0.33, h * 0.25);
+            ctx.lineTo(w * 0.75, h * 0.25);
+            ctx.lineTo(w * 0.75, h * 0.68);
+            ctx.lineTo(w * 0.33, h * 0.68);
+            ctx.closePath();
+            ctx.stroke();
+
+            // エリア区分（エリア背景カード）
+            const drawZone = (x, y, width, height, label, color) => {
+                ctx.fillStyle = color;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(x, y, width, height, 16);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = 'bold 14px "M PLUS Rounded 1c"';
+                ctx.fillStyle = '#fef08a';
+                ctx.textAlign = 'left';
+                ctx.fillText(label, x + 16, y + 26);
+            };
+
+            // 1. 猛獣舎エリア（スマトラトラ・ホッキョクグマ）
+            drawZone(w * 0.10, h * 0.12, w * 0.42, h * 0.28, '🐾 猛獣舎エリア', 'rgba(239, 68, 68, 0.15)');
+
+            // 2. アフリカ園エリア（アフリカゾウ・キリン）
+            drawZone(w * 0.55, h * 0.12, w * 0.38, h * 0.32, '🌍 アフリカ園エリア', 'rgba(234, 179, 8, 0.15)');
+
+            // 3. ふれあいの丘エリア（レッサーパンダ・カピバラ）
+            drawZone(w * 0.10, h * 0.54, w * 0.43, h * 0.32, '🌿 ふれあいの丘エリア', 'rgba(34, 197, 94, 0.15)');
+
+            // 4. 水辺・カバエリア
+            drawZone(w * 0.58, h * 0.54, w * 0.35, h * 0.30, '🌊 水辺の動物エリア', 'rgba(56, 189, 248, 0.15)');
+
+            // 門の表示 (西門 & 東門)
+            // 西門（ビジターセンター）
+            ctx.fillStyle = '#0284c7';
+            ctx.fillRect(w * 0.02, h * 0.41, w * 0.08, h * 0.14);
+            ctx.font = 'bold 12px "M PLUS Rounded 1c"';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText('🚪 西門', w * 0.06, h * 0.47);
+            ctx.font = '9px "M PLUS Rounded 1c"';
+            ctx.fillText('(ビジターセンター)', w * 0.06, h * 0.52);
+
+            // 東門（八木山動物公園駅直結）
+            ctx.fillStyle = '#9333ea';
+            ctx.fillRect(w * 0.90, h * 0.41, w * 0.08, h * 0.14);
+            ctx.font = 'bold 12px "M PLUS Rounded 1c"';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText('🚪 東門', w * 0.94, h * 0.47);
+            ctx.font = '9px "M PLUS Rounded 1c"';
+            ctx.fillText('(地下鉄駅直結)', w * 0.94, h * 0.52);
+
+            // タイトル・施設名表示
+            ctx.font = 'black 16px "M PLUS Rounded 1c"';
+            ctx.fillStyle = '#fbbf24';
+            ctx.textAlign = 'center';
+            ctx.fillText('動物園 案内マップ', w * 0.5, h * 0.06);
+
+            ctx.restore();
+        }
+
+        // 背景およびアイコン・ターゲットの描画
+        function drawStage() {
+            const w = mapCanvas.width;
+            const h = mapCanvas.height;
+
+            mapCtx.clearRect(0, 0, w, h);
+
+            if (currentMapKey === 'japan') {
+                // リアルな日本列島を描画
+                drawJapanMapOutline(mapCtx, w, h);
+            } else if (currentMapKey === 'zoo') {
+                // 八木山動物公園風マップを描画
+                drawYagiyamaZooMap(mapCtx, w, h);
+            } else {
+                // 背景グリッド描画（雰囲気を高めるプロジェクション風）
+                mapCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+                mapCtx.lineWidth = 2;
+                const step = 60;
+                for (let x = 0; x < w; x += step) {
+                    mapCtx.beginPath();
+                    mapCtx.moveTo(x, 0);
+                    mapCtx.lineTo(x, h);
+                    mapCtx.stroke();
+                }
+                for (let y = 0; y < h; y += step) {
+                    mapCtx.beginPath();
+                    mapCtx.moveTo(0, y);
+                    mapCtx.lineTo(w, y);
+                    mapCtx.stroke();
+                }
+            }
+
+            // アイテム・ターゲット描画
+            const targets = MAP_DATASETS[currentMapKey];
+            targets.forEach(item => {
+                const cx = item.x * w;
+                const cy = item.y * h;
+                const r = item.radius * Math.min(w, h);
+
+                // 外枠リング
+                mapCtx.beginPath();
+                mapCtx.arc(cx, cy, r, 0, Math.PI * 2);
+                mapCtx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                mapCtx.fill();
+                mapCtx.lineWidth = 4;
+                mapCtx.strokeStyle = 'rgba(251, 191, 36, 0.6)'; // amber-400
+                mapCtx.stroke();
+
+                // アイコン絵文字
+                mapCtx.font = `${r * 1.1}px "M PLUS Rounded 1c", sans-serif`;
+                mapCtx.textAlign = 'center';
+                mapCtx.textBaseline = 'middle';
+                mapCtx.fillText(item.icon, cx, cy - r * 0.1);
+
+                // ラベルテキスト
+                mapCtx.font = `bold ${Math.max(14, r * 0.35)}px "M PLUS Rounded 1c"`;
+                mapCtx.fillStyle = '#ffffff';
+                mapCtx.fillText(item.name, cx, cy + r * 0.7);
+            });
+        }
+
+        function createExplosion(x, y) {
+            for (let i = 0; i < 30; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 8 + 2;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: Math.random() * 8 + 4,
+                    color: `hsl(${Math.random() * 60 + 30}, 100%, 60%)`, // 金〜橙の光
+                    alpha: 1,
+                    life: 1
+                });
+            }
+        }
+
+        function updateAndDrawParticles() {
+            fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life -= 0.03;
+                p.alpha = Math.max(0, p.life);
+
+                fxCtx.beginPath();
+                fxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                fxCtx.fillStyle = p.color;
+                fxCtx.globalAlpha = p.alpha;
+                fxCtx.fill();
+                fxCtx.globalAlpha = 1.0;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+            requestAnimationFrame(updateAndDrawParticles);
+        }
+
+        function handleHit(x, y) {
+            sound.playHit();
+            createExplosion(x, y);
+
+            const w = mapCanvas.width;
+            const h = mapCanvas.height;
+            const targets = MAP_DATASETS[currentMapKey];
+
+            let hitItem = null;
+            for (let item of targets) {
+                const cx = item.x * w;
+                const cy = item.y * h;
+                const r = item.radius * Math.min(w, h);
+                const dist = Math.hypot(x - cx, y - cy);
+
+                if (dist <= r) {
+                    hitItem = item;
+                    break;
+                }
+            }
+
+            if (hitItem) {
+                // ポップアップ表示
+                magnifierIcon.textContent = hitItem.icon;
+                infoTitle.textContent = hitItem.name;
+                infoDesc.textContent = hitItem.desc;
+
+                magnifierPopup.style.left = `${Math.min(Math.max(x, 150), w - 150)}px`;
+                magnifierPopup.style.top = `${Math.min(Math.max(y - 80, 100), h - 220)}px`;
+                magnifierPopup.classList.remove('hidden');
+
+                // クイズ判定
+                if (currentGameMode === 'quiz' && currentQuizTarget) {
+                    if (hitItem.id === currentQuizTarget.id) {
+                        sound.playCorrect();
+                        score += 10;
+                        scoreVal.textContent = score;
+                        setTimeout(() => {
+                            nextQuiz();
+                        }, 1800);
+                    }
+                }
+            }
+        }
+
+        // クイズ出題ロジック
+        function nextQuiz() {
+            const targets = MAP_DATASETS[currentMapKey];
+            currentQuizTarget = targets[Math.floor(Math.random() * targets.length)];
+
+            if (currentMapKey === 'japan') {
+                quizQuestion.textContent = `「${currentQuizTarget.name}」にボールを当てよう！`;
+            } else if (currentMapKey === 'zoo') {
+                quizQuestion.textContent = `動物園の「${currentQuizTarget.name}」はどこかな？`;
+            } else if (currentMapKey === 'math') {
+                // 数字ごとに複数の計算問題バリエーションからランダム出題
+                const mathQuestions = {
+                    1: ['「 3 - 2 」の答えは？', '「 5 - 4 」の答えは？', '「 10 - 9 」の答えは？'],
+                    2: ['「 1 + 1 」の答えは？', '「 5 - 3 」の答えは？', '「 6 ÷ 3 」の答えは？'],
+                    3: ['「 1 + 2 」の答えは？', '「 7 - 4 」の答えは？', '「 9 ÷ 3 」の答えは？'],
+                    4: ['「 2 + 2 」の答えは？', '「 9 - 5 」の答えは？', '「 2 × 2 」の答えは？'],
+                    5: ['「 2 + 3 」の答えは？', '「 10 - 5 」の答えは？', '「 15 ÷ 3 」の答えは？'],
+                    6: ['「 3 + 3 」の答えは？', '「 10 - 4 」の答えは？', '「 2 × 3 」の答えは？'],
+                    7: ['「 4 + 3 」の答えは？', '「 12 - 5 」の答えは？', '「 14 ÷ 2 」の答えは？'],
+                    8: ['「 4 + 4 」の答えは？', '「 15 - 7 」の答えは？', '「 2 × 4 」の答えは？'],
+                    9: ['「 5 + 4 」の答えは？', '「 18 - 9 」の答えは？', '「 3 × 3 」の答えは？'],
+                    10: ['「 5 + 5 」の答えは？', '「 20 - 10 」の答えは？', '「 2 × 5 」の答えは？'],
+                    12: ['「 6 + 6 」の答えは？', '「 20 - 8 」の答えは？', '「 3 × 4 」の答えは？'],
+                    15: ['「 10 + 5 」の答えは？', '「 30 - 15 」の答えは？', '「 3 × 5 」の答えは？']
+                };
+                const qList = mathQuestions[currentQuizTarget.val] || [`「 ${currentQuizTarget.val} 」を狙おう！`];
+                quizQuestion.textContent = qList[Math.floor(Math.random() * qList.length)];
+            }
+        }
+
+        // マウス/タッチによる直接操作
+        stageContainer.addEventListener('pointerdown', (e) => {
+            const rect = stageContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            handleHit(x, y);
+        });
+
+        let isCameraActive = false;
+        let videoStream = null;
+        let targetColor = { r: 230, g: 40, b: 40 }; // 初期設定：赤色
+        let lastHitTime = 0; // 連続検知のチャタリング防止
+
+        const video = document.getElementById('webcam');
+        const processCanvas = document.getElementById('camera-process-canvas');
+        const processCtx = processCanvas.getContext('2d');
+        const cameraPointer = document.getElementById('camera-pointer');
+
+        const toggleCameraBtn = document.getElementById('toggle-camera-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const colorToleranceInput = document.getElementById('color-tolerance');
+        const minAreaInput = document.getElementById('min-area');
+        const selectedColorBox = document.getElementById('selected-color-box');
+        const selectedColorVal = document.getElementById('selected-color-val');
+        const flipCameraCheck = document.getElementById('flip-camera-check');
+
+        async function initCamera() {
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 640, height: 480, facingMode: 'user' }
+                });
+                video.srcObject = videoStream;
+                isCameraActive = true;
+                toggleCameraBtn.classList.replace('bg-blue-600', 'bg-emerald-600');
+                toggleCameraBtn.innerHTML = '<span>📷 カメラ色検出: ON</span>';
+                document.getElementById('game-status-badge').textContent = 'カメラボール認識中';
+                document.getElementById('game-status-badge').className = 'bg-blue-500/20 text-blue-300 text-xs px-2.5 py-1 rounded-full font-bold border border-blue-500/30';
+                
+                requestAnimationFrame(processCameraFrame);
+            } catch (err) {
+                alert('カメラの起動に失敗しました。カメラのアクセス許可を確認してください。');
+                console.error(err);
+            }
+        }
+
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+            isCameraActive = false;
+            toggleCameraBtn.classList.replace('bg-emerald-600', 'bg-blue-600');
+            toggleCameraBtn.innerHTML = '<span>📷 カメラ色検出: OFF</span>';
+            cameraPointer.classList.add('hidden');
+            document.getElementById('game-status-badge').textContent = 'マウス/タッチモード';
+            document.getElementById('game-status-badge').className = 'bg-emerald-500/20 text-emerald-300 text-xs px-2.5 py-1 rounded-full font-bold border border-emerald-500/30';
+        }
+
+        // カメラ映像からターゲット色領域の中心座標を抽出
+        function processCameraFrame() {
+            if (!isCameraActive) return;
+
+            const vw = video.videoWidth || 320;
+            const vh = video.videoHeight || 240;
+            processCanvas.width = vw;
+            processCanvas.height = vh;
+
+            processCtx.drawImage(video, 0, 0, vw, vh);
+            const frame = processCtx.getImageData(0, 0, vw, vh);
+            const data = frame.data;
+
+            const tol = parseInt(colorToleranceInput.value);
+            const minArea = parseInt(minAreaInput.value);
+
+            let sumX = 0;
+            let sumY = 0;
+            let count = 0;
+
+            for (let i = 0; i < data.length; i += 16) { // スピード最適化のため4ピクセル飛ばし
+                const r = data[i];
+                const g = data[i + 1];
+                const b = data[i + 2];
+
+                // ユークリッド距離で色比較
+                const dist = Math.sqrt(
+                    (r - targetColor.r) ** 2 +
+                    (g - targetColor.g) ** 2 +
+                    (b - targetColor.b) ** 2
+                );
+
+                if (dist < tol) {
+                    const pixelIdx = i / 4;
+                    const x = pixelIdx % vw;
+                    const y = Math.floor(pixelIdx / vw);
+                    sumX += x;
+                    sumY += y;
+                    count++;
+                }
+            }
+
+            if (count > minArea) {
+                let avgX = sumX / count;
+                let avgY = sumY / count;
+
+                // 左右反転処理
+                if (flipCameraCheck.checked) {
+                    avgX = vw - avgX;
+                }
+
+                // 投影ステージ座標へ変換
+                const stageW = stageContainer.clientWidth;
+                const stageH = stageContainer.clientHeight;
+                const mappedX = (avgX / vw) * stageW;
+                const mappedY = (avgY / vh) * stageH;
+
+                cameraPointer.style.left = `${mappedX}px`;
+                cameraPointer.style.top = `${mappedY}px`;
+                cameraPointer.classList.remove('hidden');
+
+                // ヒット検出（1秒間のクールダウン）
+                const now = Date.now();
+                if (now - lastHitTime > 1000) {
+                    handleHit(mappedX, mappedY);
+                    lastHitTime = now;
+                }
+            } else {
+                cameraPointer.classList.add('hidden');
+            }
+
+            requestAnimationFrame(processCameraFrame);
+        }
+
+        // 設定画面でのカラーピッカー（カメラプレビュークリック）
+        processCanvas.addEventListener('click', (e) => {
+            const rect = processCanvas.getBoundingClientRect();
+            const clickX = Math.floor((e.clientX - rect.left) * (processCanvas.width / rect.width));
+            const clickY = Math.floor((e.clientY - rect.top) * (processCanvas.height / rect.height));
+
+            const pixelData = processCtx.getImageData(clickX, clickY, 1, 1).data;
+            targetColor = { r: pixelData[0], g: pixelData[1], b: pixelData[2] };
+
+            selectedColorBox.style.backgroundColor = `rgb(${targetColor.r}, ${targetColor.g}, ${targetColor.b})`;
+            selectedColorVal.textContent = `R:${targetColor.r} G:${targetColor.g} B:${targetColor.b}`;
+        });
+
+        toggleCameraBtn.addEventListener('click', () => {
+            if (isCameraActive) stopCamera();
+            else initCamera();
+        });
+
+        document.getElementById('open-settings-btn').addEventListener('click', () => {
+            settingsModal.classList.remove('hidden');
+        });
+
+        document.getElementById('close-settings-btn').addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+
+        document.getElementById('map-select').addEventListener('change', (e) => {
+            currentMapKey = e.target.value;
+            magnifierPopup.classList.add('hidden');
+            drawStage();
+            if (currentGameMode === 'quiz') nextQuiz();
+        });
+
+        document.getElementById('mode-select').addEventListener('change', (e) => {
+            currentGameMode = e.target.value;
+            magnifierPopup.classList.add('hidden');
+            if (currentGameMode === 'quiz') {
+                quizBanner.classList.remove('hidden');
+                quizBanner.classList.add('flex');
+                score = 0;
+                scoreVal.textContent = '0';
+                nextQuiz();
+            } else {
+                quizBanner.classList.add('hidden');
+                quizBanner.classList.remove('flex');
+            }
+        });
+
+        // フルスクリーン化 (プロジェクター投影用・クロスブラウザ対応)
+        document.getElementById('fullscreen-btn').addEventListener('click', () => {
+            try {
+                const doc = document;
+                const docEl = document.documentElement;
+
+                // 各ブラウザ向けプレフィックスに対応したメソッドの取得
+                const requestFS = docEl.requestFullscreen || 
+                                  docEl.webkitRequestFullscreen || 
+                                  docEl.mozRequestFullScreen || 
+                                  docEl.msRequestFullscreen;
+
+                const exitFS = doc.exitFullscreen || 
+                               doc.webkitExitFullscreen || 
+                               doc.mozCancelFullScreen || 
+                               doc.msExitFullscreen;
+
+                const fullscreenElement = doc.fullscreenElement || 
+                                          doc.webkitFullscreenElement || 
+                                          doc.mozFullScreenElement || 
+                                          doc.msFullscreenElement;
+
+                if (!fullscreenElement) {
+                    if (requestFS) {
+                        const res = requestFS.call(docEl);
+                        if (res && typeof res.catch === 'function') {
+                            res.catch((err) => console.log('Fullscreen failed:', err));
+                        }
+                    } else {
+                        console.warn('Fullscreen API is not supported in this environment.');
+                    }
+                } else {
+                    if (exitFS) {
+                        const res = exitFS.call(doc);
+                        if (res && typeof res.catch === 'function') {
+                            res.catch((err) => console.log('Exit fullscreen failed:', err));
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn('Fullscreen operation failed:', err);
+            }
+        });
+
+        window.onload = () => {
+            resizeCanvases();
+            updateAndDrawParticles();
+        };
+    </script>
+</body>
+</html>
