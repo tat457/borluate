@@ -17,7 +17,7 @@
 
         /* 虫眼鏡風グラフィック */
         .magnifier-lens {
-            box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.9), 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9), 0 10px 15px -3px rgba(0, 0, 0, 0.3);
         }
 
         /* プロジェクター用背景 */
@@ -33,12 +33,12 @@
 
         /* ポップアップアニメーション */
         @keyframes pop-in {
-            0% { transform: scale(0.5); opacity: 0; }
-            70% { transform: scale(1.1); opacity: 1; }
+            0% { transform: scale(0.6); opacity: 0; }
+            70% { transform: scale(1.05); opacity: 1; }
             100% { transform: scale(1); opacity: 1; }
         }
         .animate-pop {
-            animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: pop-in 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         /* 鏡像反転用スタイル */
@@ -103,43 +103,43 @@
         <!-- パーティクル＆ヒットエフェクト用キャンバス -->
         <canvas id="fx-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
 
-        <!-- クイズ案内バー & スコア -->
-        <div id="quiz-banner" class="hidden absolute top-2 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-900 px-6 py-2 rounded-2xl shadow-2xl z-20 border-2 border-white flex items-center space-x-6">
+        <!-- クイズ案内バー & スコア（コンパクト化） -->
+        <div id="quiz-banner" class="hidden absolute top-2 left-1/2 -translate-x-1/2 bg-amber-400 text-slate-900 px-4 py-1.5 rounded-xl shadow-xl z-20 border-2 border-white flex items-center space-x-4">
             <div>
-                <span class="text-[10px] font-black uppercase tracking-wider block text-slate-700 leading-none">もんだい</span>
-                <span id="quiz-question" class="text-xl font-black">さくらんぼの名産地「山形県」を狙おう！</span>
+                <span class="text-[9px] font-black uppercase tracking-wider block text-slate-800 leading-none">もんだい</span>
+                <span id="quiz-question" class="text-base font-black">さくらんぼの名産地「山形県」を狙おう！</span>
             </div>
-            <div id="score-display" class="bg-slate-900/90 text-amber-400 px-4 py-1 rounded-xl font-black text-lg border border-amber-300 flex items-center space-x-2">
-                <span class="text-xs text-slate-300">点数:</span>
-                <span id="score-val" class="text-2xl text-amber-300">0</span>
+            <div id="score-display" class="bg-slate-900/90 text-amber-400 px-3 py-0.5 rounded-lg font-black text-sm border border-amber-300 flex items-center space-x-1.5">
+                <span class="text-[10px] text-slate-300">点数:</span>
+                <span id="score-val" class="text-lg text-amber-300 font-extrabold">0</span>
             </div>
         </div>
 
-        <!-- フィードバックポップアップ -->
-        <div id="feedback-toast" class="hidden absolute z-30 pointer-events-none transform -translate-x-1/2 -translate-y-1/2 left-1/2 top-1/2 flex flex-col items-center">
-            <div id="feedback-box" class="px-8 py-4 rounded-3xl shadow-2xl border-4 text-center animate-pop flex items-center space-x-4">
-                <span id="feedback-icon" class="text-6xl">🎉</span>
+        <!-- フィードバックポップアップ（画面中央ではなく画面上部に配置し、小型化） -->
+        <div id="feedback-toast" class="hidden absolute z-30 pointer-events-none transform -translate-x-1/2 left-1/2 top-14 flex flex-col items-center">
+            <div id="feedback-box" class="px-5 py-2 rounded-2xl shadow-xl border-2 text-center animate-pop flex items-center space-x-3 backdrop-blur-md">
+                <span id="feedback-icon" class="text-3xl">🎉</span>
                 <div>
-                    <h2 id="feedback-title" class="text-3xl font-black">だいせいかい！</h2>
-                    <p id="feedback-sub" class="text-lg font-bold mt-1">+10 てん ゲット！</p>
+                    <h2 id="feedback-title" class="text-xl font-black">だいせいかい！</h2>
+                    <p id="feedback-sub" class="text-xs font-bold mt-0.5">+10 てん ゲット！</p>
                 </div>
             </div>
         </div>
 
-        <!-- 虫眼鏡 ＆ 情報ポップアップ -->
+        <!-- 虫眼鏡 ＆ 情報ポップアップ（大幅にコンパクト化） -->
         <div id="magnifier-popup" class="absolute hidden z-20 transition-all duration-200 pointer-events-none flex flex-col items-center">
-            <div class="relative w-32 h-32 rounded-full border-4 border-amber-400 magnifier-lens bg-slate-900/80 overflow-hidden flex items-center justify-center shadow-2xl backdrop-blur-sm">
-                <span id="magnifier-icon" class="text-5xl animate-bounce">🍎</span>
+            <div class="relative w-16 h-16 rounded-full border-2 border-amber-400 magnifier-lens bg-slate-900/85 overflow-hidden flex items-center justify-center shadow-lg backdrop-blur-sm">
+                <span id="magnifier-icon" class="text-3xl animate-bounce">🍎</span>
             </div>
-            <div class="mt-2 bg-white text-slate-900 px-5 py-2.5 rounded-2xl shadow-2xl border-2 border-amber-400 max-w-sm text-center">
-                <h3 id="info-title" class="text-lg font-black text-amber-600">山形県</h3>
-                <p id="info-desc" class="text-xs font-bold text-slate-700 mt-0.5">さくらんぼやラ・フランス、美味しい温泉がいっぱい！</p>
+            <div class="mt-1 bg-white/95 text-slate-900 px-3 py-1.5 rounded-xl shadow-lg border border-amber-400 max-w-xs text-center">
+                <h3 id="info-title" class="text-xs font-black text-amber-600 leading-tight">山形県</h3>
+                <p id="info-desc" class="text-[10px] font-bold text-slate-700 mt-0.5 leading-snug">さくらんぼやラ・フランス！</p>
             </div>
         </div>
 
         <!-- ボール検出の現在位置ポインター -->
-        <div id="camera-pointer" class="hidden absolute w-10 h-10 -ml-5 -mt-5 rounded-full border-4 border-red-500 bg-red-500/30 pointer-events-none z-30 transition-all duration-75 flex items-center justify-center">
-            <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+        <div id="camera-pointer" class="hidden absolute w-8 h-8 -ml-4 -mt-4 rounded-full border-2 border-red-500 bg-red-500/30 pointer-events-none z-30 transition-all duration-75 flex items-center justify-center">
+            <div class="w-2.5 h-2.5 bg-red-500 rounded-full"></div>
         </div>
     </main>
 
@@ -300,7 +300,6 @@
 
         const sound = new SoundFX();
 
-        // 🔴 修正：num6 の val: 5 -> val: 6 に正しく修正
         const MAP_DATASETS = {
             japan: [
                 { id: 'hokkaido', name: '北海道', icon: '🐻', desc: '広大な自然！美味しいカニとスープカレー！', x: 0.81, y: 0.22, radius: 0.11 },
@@ -339,19 +338,15 @@
                 { id: 'num15', name: '15', icon: '15', desc: '「 15 」をゲット！', x: 0.85, y: 0.82, radius: 0.10, val: 15 }
             ],
             darts: [
-                // 赤色ゾーン（Bull・100点）
                 { id: 'red_center', name: '赤ゾーン (BULL)', icon: '🎯', desc: 'ど真ん中！大成功の 100点！', x: 0.50, y: 0.50, radius: 0.09, val: 100 },
-                // 緑色ゾーン（50点）
                 { id: 'green_top', name: '緑ゾーン', icon: '⭐', desc: '高得点！ 50点ゲット！', x: 0.50, y: 0.35, radius: 0.07, val: 50 },
                 { id: 'green_bottom', name: '緑ゾーン', icon: '⭐', desc: '高得点！ 50点ゲット！', x: 0.50, y: 0.65, radius: 0.07, val: 50 },
                 { id: 'green_left', name: '緑ゾーン', icon: '⭐', desc: '高得点！ 50点ゲット！', x: 0.35, y: 0.50, radius: 0.07, val: 50 },
                 { id: 'green_right', name: '緑ゾーン', icon: '⭐', desc: '高得点！ 50点ゲット！', x: 0.65, y: 0.50, radius: 0.07, val: 50 },
-                // 黄色ゾーン（30点）
                 { id: 'yellow_tl', name: '黄ゾーン', icon: '💎', desc: 'ナイス！ 30点ゲット！', x: 0.28, y: 0.28, radius: 0.07, val: 30 },
                 { id: 'yellow_tr', name: '黄ゾーン', icon: '💎', desc: 'ナイス！ 30点ゲット！', x: 0.72, y: 0.28, radius: 0.07, val: 30 },
                 { id: 'yellow_bl', name: '黄ゾーン', icon: '💎', desc: 'ナイス！ 30点ゲット！', x: 0.28, y: 0.72, radius: 0.07, val: 30 },
                 { id: 'yellow_br', name: '黄ゾーン', icon: '💎', desc: 'ナイス！ 30点ゲット！', x: 0.72, y: 0.72, radius: 0.07, val: 30 },
-                // 青色ゾーン（10点）
                 { id: 'blue_top', name: '青ゾーン', icon: '🎈', desc: '10点ヒット！', x: 0.50, y: 0.14, radius: 0.07, val: 10 },
                 { id: 'blue_bottom', name: '青ゾーン', icon: '🎈', desc: '10点ヒット！', x: 0.50, y: 0.86, radius: 0.07, val: 10 },
                 { id: 'blue_left', name: '青ゾーン', icon: '🎈', desc: '10点ヒット！', x: 0.14, y: 0.50, radius: 0.07, val: 10 },
@@ -426,7 +421,6 @@
                 return { x: tx, y: ty };
             }
 
-            // 点(x, y)が校正四角形（ポリゴン）内にあるかチェック
             static isPointInPolygon(pt, poly) {
                 let inside = false;
                 for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
@@ -464,6 +458,7 @@
         let score = 0;
         let currentQuizTarget = null;
         let particles = [];
+        let magnifierTimeoutId = null;
 
         let calibPins = [
             { x: 0.05, y: 0.05 },
@@ -516,7 +511,6 @@
         const selectedColorVal = document.getElementById('selected-color-val');
         const flipCameraCheck = document.getElementById('flip-camera-check');
 
-        // 🔴 修正①：左右反転（鏡像モード）を正確に考慮したホモグラフィー行列の構築
         function updateHomographyMatrix() {
             const vw = video.videoWidth || 640;
             const vh = video.videoHeight || 480;
@@ -537,7 +531,6 @@
             cachedHomographyMatrix = Homography.getHomographyMatrix(srcQuad, dstQuad);
         }
 
-        // 🔴 修正⑬：キャリブレーション・カラー設定の LocalStorage 保存 & 復元機能
         function saveSettings() {
             const settings = {
                 calibPins,
@@ -742,7 +735,6 @@
             const cy = h / 2;
             const minDim = Math.min(w, h);
 
-            // 的の各カラーリング定義 (外側から順に描画)
             const rings = [
                 { r: minDim * 0.42, color: '#0284c7', label: '10点', border: '#38bdf8' },
                 { r: minDim * 0.31, color: '#f59e0b', label: '30点', border: '#fbbf24' },
@@ -762,7 +754,6 @@
                 ctx.stroke();
             });
 
-            // 放射状のガイド線
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
             ctx.lineWidth = 2;
             for (let i = 0; i < 8; i++) {
@@ -773,16 +764,13 @@
                 ctx.stroke();
             }
 
-            // 各リング内に点数ラベルを描画
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // 100点 (赤・中央)
             ctx.font = 'black 22px "M PLUS Rounded 1c"';
             ctx.fillStyle = '#ffffff';
             ctx.fillText('100', cx, cy);
 
-            // リング用テキスト描画ヘルパー (4方向)
             const drawRingLabels = (rDist, text, textColor) => {
                 ctx.font = 'black 16px "M PLUS Rounded 1c"';
                 ctx.fillStyle = textColor;
@@ -894,10 +882,10 @@
         function showFeedbackToast(isCorrect, text, subtext) {
             feedbackToast.classList.remove('hidden');
             if (isCorrect) {
-                feedbackBox.className = 'px-8 py-4 rounded-3xl shadow-2xl border-4 text-center animate-pop flex items-center space-x-4 bg-emerald-600 border-white text-white';
+                feedbackBox.className = 'px-5 py-2 rounded-2xl shadow-xl border-2 text-center animate-pop flex items-center space-x-3 bg-emerald-600/90 border-white text-white backdrop-blur-md';
                 feedbackIcon.textContent = '🎉';
             } else {
-                feedbackBox.className = 'px-8 py-4 rounded-3xl shadow-2xl border-4 text-center animate-pop flex items-center space-x-4 bg-rose-600 border-white text-white';
+                feedbackBox.className = 'px-5 py-2 rounded-2xl shadow-xl border-2 text-center animate-pop flex items-center space-x-3 bg-rose-600/90 border-white text-white backdrop-blur-md';
                 feedbackIcon.textContent = '🤔';
             }
             feedbackTitle.textContent = text;
@@ -905,7 +893,33 @@
 
             setTimeout(() => {
                 feedbackToast.classList.add('hidden');
-            }, 1800);
+            }, 1500);
+        }
+
+        function showMagnifier(x, y, icon, title, desc) {
+            if (magnifierTimeoutId) {
+                clearTimeout(magnifierTimeoutId);
+            }
+
+            const w = mapCanvas.width;
+            const h = mapCanvas.height;
+
+            magnifierIcon.textContent = icon;
+            infoTitle.textContent = title;
+            infoDesc.textContent = desc;
+
+            // ターゲット位置を直接覆わないよう、少し上にずらして配置
+            const popX = Math.min(Math.max(x, 100), w - 100);
+            const popY = Math.min(Math.max(y - 50, 60), h - 120);
+
+            magnifierPopup.style.left = `${popX}px`;
+            magnifierPopup.style.top = `${popY}px`;
+            magnifierPopup.classList.remove('hidden');
+
+            // 2.5秒後に自動で隠して画面をクリアに保つ
+            magnifierTimeoutId = setTimeout(() => {
+                magnifierPopup.classList.add('hidden');
+            }, 2500);
         }
 
         function updateScoreDisplay() {
@@ -936,20 +950,14 @@
             }
 
             if (currentGameMode === 'quiz') {
-                if (hitItem && currentQuizTarget && hitItem.id === currentQuizTarget.id) {
-                    magnifierIcon.textContent = hitItem.icon;
-                    infoTitle.textContent = hitItem.name;
-                    infoDesc.textContent = hitItem.desc;
-                    magnifierPopup.style.left = `${Math.min(Math.max(x, 150), w - 150)}px`;
-                    magnifierPopup.style.top = `${Math.min(Math.max(y - 80, 100), h - 220)}px`;
-                    magnifierPopup.classList.remove('hidden');
-
+                if (hitItem && currentQuizTarget && (hitItem.id === currentQuizTarget.id || hitItem.name === currentQuizTarget.name)) {
+                    showMagnifier(x, y, hitItem.icon, hitItem.name, hitItem.desc);
                     sound.playCorrect();
                     const addedScore = (hitItem && hitItem.val) ? hitItem.val : 10;
                     score += addedScore;
                     updateScoreDisplay();
                     showFeedbackToast(true, 'だいせいかい！', `+${addedScore}てん ゲット！`);
-                    setTimeout(() => { nextQuiz(); }, 1800);
+                    setTimeout(() => { nextQuiz(); }, 1500);
                 } else {
                     magnifierPopup.classList.add('hidden');
                     sound.playWrong();
@@ -957,13 +965,7 @@
                 }
             } else {
                 if (hitItem) {
-                    magnifierIcon.textContent = hitItem.icon;
-                    infoTitle.textContent = hitItem.name;
-                    infoDesc.textContent = hitItem.desc;
-                    magnifierPopup.style.left = `${Math.min(Math.max(x, 150), w - 150)}px`;
-                    magnifierPopup.style.top = `${Math.min(Math.max(y - 80, 100), h - 220)}px`;
-                    magnifierPopup.classList.remove('hidden');
-
+                    showMagnifier(x, y, hitItem.icon, hitItem.name, hitItem.desc);
                     if (hitItem.val) {
                         score += hitItem.val;
                         updateScoreDisplay();
@@ -1018,7 +1020,6 @@
 
         hToleranceInput.addEventListener('input', (e) => hTolVal.textContent = `±${e.target.value}°`);
         impactSensInput.addEventListener('input', (e) => sensVal.textContent = e.target.value);
-        // 🟡 修正⑦：最小検出面積の表示・スライダー文言との一貫化
         minAreaInput.addEventListener('input', (e) => minAreaVal.textContent = `${e.target.value} px`);
 
         async function initCamera() {
@@ -1055,7 +1056,6 @@
             }
         }
 
-        // 🟢 修正⑪：カメラ停止時の history およびヒット状態の初期化
         function stopCamera() {
             isCameraActive = false;
             if (cameraAnimationId) {
@@ -1193,7 +1193,6 @@
             return largestBlob;
         }
 
-        // 🟡 修正⑦：カメラ処理を約30FPSに制限して低スペックPCの負荷軽減
         function processCameraFrame(timestamp) {
             if (!isCameraActive) return;
 
@@ -1215,9 +1214,7 @@
             const ballBlob = findLargestBlob(frame.data, vw, vh, targetHsv, hTol);
             const now = Date.now();
 
-            // 🟡 修正⑦：ballBlob.area >= minArea への直感的一貫処理
             if (ballBlob && ballBlob.area >= minArea) {
-                // 原カメラ画像座標系での位置
                 const rawX = ballBlob.cx;
                 const rawY = ballBlob.cy;
 
@@ -1229,7 +1226,6 @@
 
                 const isInsideProjectionArea = Homography.isPointInPolygon({ x: rawX, y: rawY }, calibPolyInCamCoords);
 
-                // 🟠 修正④：投影壁面エリア外に出た場合は履歴をクリアして進入時の誤反応を防止
                 if (!isInsideProjectionArea) {
                     ballHistory.length = 0;
                 } else {
@@ -1254,7 +1250,6 @@
                     const sens = parseInt(impactSensInput.value);
                     const reqSpeedBefore = 0.10 + (10 - sens) * 0.02;
                     const reqSpeedDrop = 0.50;
-                    // 🟠 修正⑤：面積増加の閾値を 1.05 から 1.15 (15%増) に引き上げて誤検出防止
                     const reqAreaGrowth = 1.15;
 
                     if (speedBefore > reqSpeedBefore && speedDrop < reqSpeedDrop && areaGrowthRatio >= reqAreaGrowth) {
@@ -1262,7 +1257,6 @@
                     }
                 }
 
-                // 🔴 修正①：反転に依存しない正確なホモグラフィー座標変換
                 const mappedPt = Homography.transformPoint({ x: rawX, y: rawY }, cachedHomographyMatrix);
 
                 cameraPointer.style.left = `${mappedPt.x}px`;
@@ -1359,7 +1353,6 @@
             selectedColorVal.textContent = `H:${targetHsv.h}° S:${targetHsv.s}% V:${targetHsv.v}%`;
         });
 
-        // 🔴 修正①：左右反転チェックボックスのアクション
         flipCameraCheck.addEventListener('change', (e) => {
             toggleVideoFlipUI(e.target.checked);
             updateHomographyMatrix();
@@ -1377,6 +1370,11 @@
         });
 
         document.getElementById('close-settings-btn').addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+            saveSettings();
+        });
+
+        document.getElementById('save-settings-btn').addEventListener('click', () => {
             settingsModal.classList.add('hidden');
             saveSettings();
         });
