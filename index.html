@@ -63,7 +63,7 @@
         <div class="flex items-center space-x-2 text-sm flex-wrap">
             <select id="map-select" class="bg-slate-700 text-white rounded-lg px-3 py-1.5 border border-slate-600 font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
                 <option value="japan">🗺️ 日本都道府県ゲーム (※主要11地域)</option>
-                <option value="zoo">🐯 動物園マップ</option>
+                <option value="balloon">🎈 風船撃ちゲーム</option>
                 <option value="math">🔢 さんすうターゲット</option>
                 <option value="darts">🎯 ダーツターゲット</option>
             </select>
@@ -335,14 +335,14 @@
                 { id: 'fukuoka', name: '福岡県', icon: '🍜', desc: '博多ラーメンや明太子、屋台文化が賑やか！', x: 0.26, y: 0.76, radius: 0.09 },
                 { id: 'okinawa', name: '沖縄県', icon: '🌺', desc: 'エメラルドグリーンのきれいな海と首里城！', x: 0.12, y: 0.85, radius: 0.09 }
             ],
-            zoo: [
-                { id: 'tiger', name: 'スマトラトラ', icon: '🐅', desc: '絶滅危惧種の貴重なトラ！大人気スター！', x: 0.22, y: 0.30, radius: 0.13 },
-                { id: 'polarbear', name: 'ホッキョクグマ', icon: '🐻‍❄️', desc: 'ダイナミックなダイブが見られる大きなプールがあるよ！', x: 0.46, y: 0.30, radius: 0.13 },
-                { id: 'elephant', name: 'アフリカゾウ', icon: '🐘', desc: '大きな耳と立派なキバ！ダイナミックなゾウ舎！', x: 0.68, y: 0.30, radius: 0.13 },
-                { id: 'giraffe', name: 'キリン', icon: '🦒', desc: 'サバンナエリアをゆったり歩く、首の長い人気者！', x: 0.86, y: 0.35, radius: 0.13 },
-                { id: 'redpanda', name: 'レッサーパンダ', icon: '🦝', desc: 'ふれあいの丘で大人気！フワフワの尻尾と愛くるしい姿！', x: 0.22, y: 0.73, radius: 0.13 },
-                { id: 'capybara', name: 'カピバラ', icon: '🦫', desc: 'のんびり屋さんの人気者！ふれあい広場で癒されよう！', x: 0.48, y: 0.73, radius: 0.13 },
-                { id: 'hippo', name: 'カバ', icon: '🦛', desc: '大きな水槽でのびのび泳ぐ迫力満点のカバ！', x: 0.74, y: 0.72, radius: 0.13 }
+            balloon: [
+                { id: 'b_red', name: '赤色ふうせん', icon: '🎈', desc: 'あかい風船をバチン！ 10点ゲット！', color: '#dc2626', border: '#f87171', x: 0.12, baseX: 0.12, y: 1.1, speed: 0.0009, radius: 0.08, val: 10, phase: 0, waveAmp: 0.015, waveFreq: 1.2 },
+                { id: 'b_blue', name: '青色ふうせん', icon: '🎈', desc: 'あおい風船をバチン！ 10点ゲット！', color: '#2563eb', border: '#60a5fa', x: 0.25, baseX: 0.25, y: 1.5, speed: 0.0008, radius: 0.08, val: 10, phase: 1.5, waveAmp: 0.015, waveFreq: 1.0 },
+                { id: 'b_yellow', name: '黄色ふうせん', icon: '🎈', desc: 'きいろい風船をバチン！ 10点ゲット！', color: '#ca8a04', border: '#fde047', x: 0.38, baseX: 0.38, y: 1.9, speed: 0.0010, radius: 0.08, val: 10, phase: 3.0, waveAmp: 0.015, waveFreq: 1.4 },
+                { id: 'b_green', name: '緑色ふうせん', icon: '🎈', desc: 'みどりの風船をバチン！ 10点ゲット！', color: '#059669', border: '#34d399', x: 0.50, baseX: 0.50, y: 2.3, speed: 0.0009, radius: 0.08, val: 10, phase: 4.2, waveAmp: 0.015, waveFreq: 1.1 },
+                { id: 'b_pink', name: 'ピンクふうせん', icon: '🎈', desc: 'ピンクの風船をバチン！ 10点ゲット！', color: '#db2777', border: '#f472b6', x: 0.63, baseX: 0.63, y: 2.7, speed: 0.0008, radius: 0.08, val: 10, phase: 5.1, waveAmp: 0.015, waveFreq: 1.3 },
+                { id: 'b_star', name: 'ほし型ふうせん', icon: '⭐', desc: 'スペシャル！ 30点ゲット！', color: '#d97706', border: '#fef08a', x: 0.76, baseX: 0.76, y: 3.1, speed: 0.0011, radius: 0.08, val: 30, phase: 0.8, waveAmp: 0.015, waveFreq: 1.5 },
+                { id: 'b_gold', name: 'きinいろふうせん', name: 'きんいろふうせん', icon: '✨', desc: 'スーパーボーナス！ 50点ゲット！', color: '#b45309', border: '#fef08a', x: 0.89, baseX: 0.89, y: 3.5, speed: 0.0012, radius: 0.08, val: 50, phase: 2.3, waveAmp: 0.015, waveFreq: 1.6 }
             ],
             math: [
                 { id: 'num1', name: '1', icon: '1️⃣', desc: '「 1 」をゲット！', x: 0.15, y: 0.26, radius: 0.10, val: 1 },
@@ -701,46 +701,32 @@
             ctx.restore();
         }
 
-        function drawZooMap(ctx, w, h) {
+        function drawBalloonMap(ctx, w, h) {
             ctx.save();
-            const bgGrad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, Math.max(w, h));
-            bgGrad.addColorStop(0, '#1c3d2b');
-            bgGrad.addColorStop(1, '#0d1f15');
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
+            bgGrad.addColorStop(0, '#0284c7');
+            bgGrad.addColorStop(1, '#38bdf8');
             ctx.fillStyle = bgGrad;
             ctx.fillRect(0, 0, w, h);
 
-            ctx.strokeStyle = 'rgba(217, 180, 114, 0.25)';
-            ctx.lineWidth = 28;
-            ctx.lineCap = 'round';
+            // 雲の描画
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+            ctx.beginPath();
+            ctx.arc(w * 0.15, h * 0.20, 45, 0, Math.PI * 2);
+            ctx.arc(w * 0.22, h * 0.16, 55, 0, Math.PI * 2);
+            ctx.arc(w * 0.28, h * 0.20, 45, 0, Math.PI * 2);
+            ctx.fill();
 
             ctx.beginPath();
-            ctx.moveTo(w * 0.08, h * 0.50);
-            ctx.lineTo(w * 0.92, h * 0.50);
-            ctx.stroke();
+            ctx.arc(w * 0.72, h * 0.22, 50, 0, Math.PI * 2);
+            ctx.arc(w * 0.80, h * 0.18, 60, 0, Math.PI * 2);
+            ctx.arc(w * 0.87, h * 0.22, 45, 0, Math.PI * 2);
+            ctx.fill();
 
-            const drawZone = (x, y, width, height, label, color) => {
-                ctx.fillStyle = color;
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.roundRect(x, y, width, height, 16);
-                ctx.fill(); ctx.stroke();
-
-                ctx.font = 'bold 14px "M PLUS Rounded 1c"';
-                ctx.fillStyle = '#fef08a';
-                ctx.textAlign = 'left';
-                ctx.fillText(label, x + 16, y + 26);
-            };
-
-            drawZone(w * 0.08, h * 0.12, w * 0.42, h * 0.32, '🐾 猛獣舎エリア', 'rgba(239, 68, 68, 0.15)');
-            drawZone(w * 0.54, h * 0.12, w * 0.38, h * 0.34, '🌍 アフリカ園エリア', 'rgba(234, 179, 8, 0.15)');
-            drawZone(w * 0.08, h * 0.55, w * 0.44, h * 0.34, '🌿 ふれあいの丘エリア', 'rgba(34, 197, 94, 0.15)');
-            drawZone(w * 0.58, h * 0.55, w * 0.35, h * 0.32, '🌊 水辺の動物エリア', 'rgba(56, 189, 248, 0.15)');
-
-            ctx.font = 'black 16px "M PLUS Rounded 1c"';
-            ctx.fillStyle = '#fbbf24';
+            ctx.font = 'black 22px "M PLUS Rounded 1c"';
+            ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
-            ctx.fillText('動物園 案内マップ', w * 0.5, h * 0.06);
+            ctx.fillText('🎈 たのしい風船撃ちゲーム', w * 0.5, h * 0.06);
             ctx.restore();
         }
 
@@ -823,8 +809,8 @@
 
             if (currentMapKey === 'japan') {
                 drawJapanMapOutline(mapCtx, w, h);
-            } else if (currentMapKey === 'zoo') {
-                drawZooMap(mapCtx, w, h);
+            } else if (currentMapKey === 'balloon') {
+                drawBalloonMap(mapCtx, w, h);
             } else if (currentMapKey === 'darts') {
                 drawDartsMap(mapCtx, w, h);
             } else {
@@ -847,20 +833,34 @@
 
                 mapCtx.beginPath();
                 mapCtx.arc(cx, cy, r, 0, Math.PI * 2);
-                mapCtx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+                mapCtx.fillStyle = item.color || 'rgba(255, 255, 255, 0.12)';
                 mapCtx.fill();
                 mapCtx.lineWidth = 4;
-                mapCtx.strokeStyle = 'rgba(251, 191, 36, 0.8)';
+                mapCtx.strokeStyle = item.border || 'rgba(251, 191, 36, 0.8)';
                 mapCtx.stroke();
 
-                mapCtx.font = `${r * 1.0}px "M PLUS Rounded 1c", sans-serif`;
+                // 風船の場合、下の結び目を描画
+                if (currentMapKey === 'balloon') {
+                    mapCtx.beginPath();
+                    mapCtx.moveTo(cx - r * 0.2, cy + r);
+                    mapCtx.lineTo(cx + r * 0.2, cy + r);
+                    mapCtx.lineTo(cx, cy + r * 1.25);
+                    mapCtx.closePath();
+                    mapCtx.fillStyle = item.border || '#ffffff';
+                    mapCtx.fill();
+                }
+
+                mapCtx.font = `${r * 0.9}px "M PLUS Rounded 1c", sans-serif`;
                 mapCtx.textAlign = 'center';
                 mapCtx.textBaseline = 'middle';
                 mapCtx.fillText(item.icon, cx, cy - r * 0.1);
 
-                mapCtx.font = `bold ${Math.max(13, r * 0.32)}px "M PLUS Rounded 1c"`;
+                mapCtx.font = `bold ${Math.max(12, r * 0.30)}px "M PLUS Rounded 1c"`;
                 mapCtx.fillStyle = '#ffffff';
-                mapCtx.fillText(item.name, cx, cy + r * 0.7);
+                mapCtx.shadowColor = 'rgba(0,0,0,0.8)';
+                mapCtx.shadowBlur = 4;
+                mapCtx.fillText(item.name, cx, cy + r * 0.65);
+                mapCtx.shadowBlur = 0;
             });
         }
 
@@ -879,7 +879,28 @@
             }
         }
 
+        function updateBalloons() {
+            if (currentMapKey !== 'balloon') return;
+            const now = Date.now();
+            MAP_DATASETS.balloon.forEach(b => {
+                b.y -= b.speed;
+                // ゆらゆら左右に揺れる動き (隣のレーンに被らないよう振幅を調整)
+                b.x = b.baseX + Math.sin(now * 0.0012 * b.waveFreq + b.phase) * b.waveAmp;
+
+                // 画面上に抜け切ったら画面下から再登場（他の風船と重ならないよう十分なY間隔を保持）
+                if (b.y < -b.radius * 1.5) {
+                    const maxY = Math.max(...MAP_DATASETS.balloon.map(item => item.y));
+                    b.y = Math.max(1.1, maxY + 0.35);
+                }
+            });
+        }
+
         function updateAndDrawParticles() {
+            if (currentMapKey === 'balloon') {
+                updateBalloons();
+                drawStage();
+            }
+
             fxCtx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
             for (let i = particles.length - 1; i >= 0; i--) {
                 const p = particles[i];
@@ -978,6 +999,13 @@
                     score += addedScore;
                     updateScoreDisplay();
                     showFeedbackToast(true, 'だいせいかい！', `+${addedScore}てん ゲット！`);
+                    
+                    // 風船割れたら重ならないY位置で下から再生成
+                    if (currentMapKey === 'balloon') {
+                        const maxY = Math.max(...MAP_DATASETS.balloon.map(item => item.y));
+                        hitItem.y = Math.max(1.1, maxY + 0.35);
+                    }
+
                     setTimeout(() => { nextQuiz(); }, 1500);
                 } else {
                     magnifierPopup.classList.add('hidden');
@@ -992,6 +1020,12 @@
                         updateScoreDisplay();
                         showFeedbackToast(true, hitItem.name, `+${hitItem.val}てん ゲット！`);
                     }
+
+                    // 風船割れたら重ならないY位置で下から再生成
+                    if (currentMapKey === 'balloon') {
+                        const maxY = Math.max(...MAP_DATASETS.balloon.map(item => item.y));
+                        hitItem.y = Math.max(1.1, maxY + 0.35);
+                    }
                 }
             }
         }
@@ -1002,8 +1036,8 @@
 
             if (currentMapKey === 'japan') {
                 quizQuestion.textContent = `「${currentQuizTarget.name}」にボールを当てよう！`;
-            } else if (currentMapKey === 'zoo') {
-                quizQuestion.textContent = `動物園の「${currentQuizTarget.name}」はどこかな？`;
+            } else if (currentMapKey === 'balloon') {
+                quizQuestion.textContent = `「${currentQuizTarget.name}」を狙って割ろう！`;
             } else if (currentMapKey === 'darts') {
                 quizQuestion.textContent = `「${currentQuizTarget.name}」をねらおう！`;
             } else if (currentMapKey === 'math') {
