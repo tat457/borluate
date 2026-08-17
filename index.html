@@ -176,14 +176,35 @@
                 </div>
 
                 <div class="space-y-4 text-sm">
+                    <!-- 使用カメラの選択機能 -->
+                    <div>
+                        <label class="block text-xs font-bold text-amber-300 mb-1">📷 使用するカメラの選択（iPhone / Webカメラ）</label>
+                        <select id="camera-select" class="w-full bg-slate-900 text-white rounded-xl px-3 py-2 border border-slate-700 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-amber-400">
+                            <option value="">(デフォルトカメラ)</option>
+                        </select>
+                    </div>
+
+                    <!-- 識別カラーの設定機能 -->
                     <div>
                         <label class="block text-xs font-bold text-amber-300 mb-1">② 検出ターゲットカラー指定（HSV方式）</label>
-                        <div class="flex items-center space-x-3 bg-slate-900/60 p-2.5 rounded-xl border border-slate-700">
+                        <div class="flex items-center space-x-3 bg-slate-900/60 p-2.5 rounded-xl border border-slate-700 mb-2">
                             <div id="selected-color-box" class="w-10 h-10 rounded-lg border-2 border-white bg-red-600 shadow shrink-0"></div>
-                            <div>
+                            <div class="flex-1">
                                 <span id="selected-color-val" class="font-mono text-slate-200 text-xs font-bold block">H:0° S:85% V:90%</span>
-                                <span class="text-[10px] text-slate-400">（映像内のボールをクリックして色を選択）</span>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <input type="color" id="ball-color-picker" value="#ef4444" class="w-6 h-6 rounded cursor-pointer border-0 bg-transparent">
+                                    <span class="text-[10px] text-slate-400">カラーパレット選択、または映像内をクリック</span>
+                                </div>
                             </div>
+                        </div>
+                        <!-- カラープリセットボタン -->
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" class="color-preset-btn text-xs bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg font-bold transition" data-color="#ef4444">🔴 赤</button>
+                            <button type="button" class="color-preset-btn text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg font-bold transition" data-color="#10b981">🟢 緑</button>
+                            <button type="button" class="color-preset-btn text-xs bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg font-bold transition" data-color="#3b82f6">🔵 青</button>
+                            <button type="button" class="color-preset-btn text-xs bg-amber-400 hover:bg-amber-300 text-slate-900 px-2.5 py-1 rounded-lg font-bold transition" data-color="#f59e0b">🟡 黄</button>
+                            <button type="button" class="color-preset-btn text-xs bg-orange-500 hover:bg-orange-400 text-white px-2.5 py-1 rounded-lg font-bold transition" data-color="#f97316">🟠 オレンジ</button>
+                            <button type="button" class="color-preset-btn text-xs bg-pink-500 hover:bg-pink-400 text-white px-2.5 py-1 rounded-lg font-bold transition" data-color="#ec4899">💖 ピンク</button>
                         </div>
                     </div>
 
@@ -1017,16 +1038,86 @@
         let videoStream = null;
         let cameraAnimationId = null;
         let targetHsv = { h: 0, s: 85, v: 90 };
+        let selectedDeviceId = '';
+
+        const cameraSelect = document.getElementById('camera-select');
+        const ballColorPicker = document.getElementById('ball-color-picker');
 
         hToleranceInput.addEventListener('input', (e) => hTolVal.textContent = `±${e.target.value}°`);
         impactSensInput.addEventListener('input', (e) => sensVal.textContent = e.target.value);
         minAreaInput.addEventListener('input', (e) => minAreaVal.textContent = `${e.target.value} px`);
 
+        // HEXからRGBに変換するヘルパー
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 255, g: 0, b: 0 };
+        }
+
+        // 指定したRGB/HEX色をターゲットカラーにセット
+        function setColorFromRgb(r, g, b, hexStr) {
+            targetHsv = rgbToHsv(r, g, b);
+            selectedColorBox.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+            selectedColorVal.textContent = `H:${targetHsv.h}° S:${targetHsv.s}% V:${targetHsv.v}%`;
+            if (hexStr) {
+                ballColorPicker.value = hexStr;
+            }
+        }
+
+        // 使用可能なカメラ一覧（iPhoneカメラ等）の取得とリスト更新
+        async function updateCameraList() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+                cameraSelect.innerHTML = '';
+                if (videoDevices.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '(カメラが見つかりません)';
+                    cameraSelect.appendChild(option);
+                    return;
+                }
+
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `カメラ ${index + 1} (${device.deviceId.slice(0, 5)}...)`;
+                    if (selectedDeviceId && device.deviceId === selectedDeviceId) {
+                        option.selected = true;
+                    }
+                    cameraSelect.appendChild(option);
+                });
+            } catch (err) {
+                console.warn('カメラ一覧の取得に失敗しました:', err);
+            }
+        }
+
         async function initCamera() {
             try {
-                videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' }
-                });
+                if (videoStream) {
+                    videoStream.getTracks().forEach(track => track.stop());
+                }
+
+                const constraints = {
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                };
+
+                const currentSelectVal = cameraSelect.value || selectedDeviceId;
+                if (currentSelectVal) {
+                    constraints.video.deviceId = { exact: currentSelectVal };
+                } else {
+                    constraints.video.facingMode = 'user';
+                }
+
+                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
                 video.srcObject = videoStream;
                 
                 video.onloadedmetadata = () => {
@@ -1049,10 +1140,50 @@
                 document.getElementById('game-status-badge').textContent = 'カメラ壁面認識中';
                 document.getElementById('game-status-badge').className = 'bg-blue-500/20 text-blue-300 text-xs px-2.5 py-1 rounded-full font-bold border border-blue-500/30';
                 
+                // カメラ許可が得られた後にラベル付きデバイス一覧を更新
+                updateCameraList();
+
                 processCameraFrame();
             } catch (err) {
-                alert('カメラの起動に失敗しました。カメラパーミッションを確認してください。');
+                alert('カメラの起動に失敗しました。カメラパーミッションまたはデバイス接続を確認してください。');
                 console.error(err);
+            }
+        }
+
+        function saveSettings() {
+            const settings = {
+                calibPins,
+                targetHsv,
+                selectedDeviceId: cameraSelect.value || selectedDeviceId,
+                hTolerance: hToleranceInput.value,
+                impactSensitivity: impactSensInput.value,
+                minArea: minAreaInput.value,
+                flipCamera: flipCameraCheck.checked
+            };
+            localStorage.setItem('wakuwaku_map_settings', JSON.stringify(settings));
+            showFeedbackToast(true, '設定を保存しました', '次回の起動時にも引き継がれます');
+        }
+
+        function loadSettings() {
+            const data = localStorage.getItem('wakuwaku_map_settings');
+            if (!data) return;
+            try {
+                const s = JSON.parse(data);
+                if (s.calibPins) calibPins = s.calibPins;
+                if (s.targetHsv) targetHsv = s.targetHsv;
+                if (s.selectedDeviceId) selectedDeviceId = s.selectedDeviceId;
+                if (s.hTolerance) { hToleranceInput.value = s.hTolerance; hTolVal.textContent = `±${s.hTolerance}°`; }
+                if (s.impactSensitivity) { impactSensInput.value = s.impactSensitivity; sensVal.textContent = s.impactSensitivity; }
+                if (s.minArea) { minAreaInput.value = s.minArea; minAreaVal.textContent = `${s.minArea} px`; }
+                if (s.flipCamera !== undefined) {
+                    flipCameraCheck.checked = s.flipCamera;
+                    toggleVideoFlipUI(s.flipCamera);
+                }
+                
+                selectedColorBox.style.backgroundColor = `hsl(${targetHsv.h}, ${targetHsv.s}%, ${targetHsv.v}%)`;
+                selectedColorVal.textContent = `H:${targetHsv.h}° S:${targetHsv.s}% V:${targetHsv.v}%`;
+            } catch(e) {
+                console.error('Failed to load settings from localStorage', e);
             }
         }
 
@@ -1347,10 +1478,30 @@
             }
 
             const pixelData = processCtx.getImageData(clickX, clickY, 1, 1).data;
-            targetHsv = rgbToHsv(pixelData[0], pixelData[1], pixelData[2]);
+            setColorFromRgb(pixelData[0], pixelData[1], pixelData[2]);
+        });
 
-            selectedColorBox.style.backgroundColor = `rgb(${pixelData[0]}, ${pixelData[1]}, ${pixelData[2]})`;
-            selectedColorVal.textContent = `H:${targetHsv.h}° S:${targetHsv.s}% V:${targetHsv.v}%`;
+        // カラーピッカー操作時の処理
+        ballColorPicker.addEventListener('input', (e) => {
+            const rgb = hexToRgb(e.target.value);
+            setColorFromRgb(rgb.r, rgb.g, rgb.b, e.target.value);
+        });
+
+        // カラープリセットボタンクリック時の処理
+        document.querySelectorAll('.color-preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const hex = e.currentTarget.getAttribute('data-color');
+                const rgb = hexToRgb(hex);
+                setColorFromRgb(rgb.r, rgb.g, rgb.b, hex);
+            });
+        });
+
+        // カメラ選択プルダウン変更時の処理
+        cameraSelect.addEventListener('change', (e) => {
+            selectedDeviceId = e.target.value;
+            if (isCameraActive) {
+                initCamera();
+            }
         });
 
         flipCameraCheck.addEventListener('change', (e) => {
@@ -1366,6 +1517,7 @@
 
         document.getElementById('open-settings-btn').addEventListener('click', () => {
             settingsModal.classList.remove('hidden');
+            updateCameraList();
             setTimeout(updatePinPositions, 100);
         });
 
