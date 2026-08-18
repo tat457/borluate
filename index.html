@@ -827,7 +827,13 @@
 
 　　        const targets = MAP_DATASETS[currentMapKey];
 
-        targets.forEach(item => {
+// ダーツゲームでは、ダーツボード自体を「的」にする。
+// 個別の 🎯⭐💎🎈 ターゲットは描画しない。
+if (currentMapKey === 'darts') {
+    return;
+}
+
+targets.forEach(item => {
     const cx = item.x * w;
     const cy = item.y * h;
     const r = item.radius * Math.min(w, h);
