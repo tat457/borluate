@@ -825,43 +825,134 @@
                 }
             }
 
-            const targets = MAP_DATASETS[currentMapKey];
             targets.forEach(item => {
-                const cx = item.x * w;
-                const cy = item.y * h;
-                const r = item.radius * Math.min(w, h);
+    const cx = item.x * w;
+    const cy = item.y * h;
+    const r = item.radius * Math.min(w, h);
 
-                mapCtx.beginPath();
-                mapCtx.arc(cx, cy, r, 0, Math.PI * 2);
-                mapCtx.fillStyle = item.color || 'rgba(255, 255, 255, 0.12)';
-                mapCtx.fill();
-                mapCtx.lineWidth = 4;
-                mapCtx.strokeStyle = item.border || 'rgba(251, 191, 36, 0.8)';
-                mapCtx.stroke();
+    // ================================
+    // さんすうゲーム専用デザイン
+    // ================================
+    if (currentMapKey === 'math') {
 
-                // 風船の場合、下の結び目を描画
-                if (currentMapKey === 'balloon') {
-                    mapCtx.beginPath();
-                    mapCtx.moveTo(cx - r * 0.2, cy + r);
-                    mapCtx.lineTo(cx + r * 0.2, cy + r);
-                    mapCtx.lineTo(cx, cy + r * 1.25);
-                    mapCtx.closePath();
-                    mapCtx.fillStyle = item.border || '#ffffff';
-                    mapCtx.fill();
-                }
+        // 数字ごとに色を変える
+        const mathColors = [
+            '#2563eb', // 青
+            '#16a34a', // 緑
+            '#f59e0b', // 黄
+            '#dc2626', // 赤
+            '#9333ea', // 紫
+            '#0891b2', // 水色
+            '#ea580c', // オレンジ
+            '#db2777', // ピンク
+            '#4f46e5', // 藍
+            '#059669', // エメラルド
+            '#ca8a04', // 金
+            '#7c3aed'  // 紫
+        ];
 
-                mapCtx.font = `${r * 0.9}px "M PLUS Rounded 1c", sans-serif`;
-                mapCtx.textAlign = 'center';
-                mapCtx.textBaseline = 'middle';
-                mapCtx.fillText(item.icon, cx, cy - r * 0.1);
+        const colorIndex = parseInt(item.name, 10) % mathColors.length;
+        const mainColor = mathColors[colorIndex];
 
-                mapCtx.font = `bold ${Math.max(12, r * 0.30)}px "M PLUS Rounded 1c"`;
-                mapCtx.fillStyle = '#ffffff';
-                mapCtx.shadowColor = 'rgba(0,0,0,0.8)';
-                mapCtx.shadowBlur = 4;
-                mapCtx.fillText(item.name, cx, cy + r * 0.65);
-                mapCtx.shadowBlur = 0;
-            });
+        // 外側の発光
+        mapCtx.save();
+        mapCtx.shadowColor = mainColor;
+        mapCtx.shadowBlur = 25;
+
+        // 数字ボタン本体
+        mapCtx.beginPath();
+        mapCtx.arc(cx, cy, r, 0, Math.PI * 2);
+        mapCtx.fillStyle = mainColor;
+        mapCtx.fill();
+
+        // 白い太い縁取り
+        mapCtx.shadowBlur = 0;
+        mapCtx.lineWidth = Math.max(5, r * 0.08);
+        mapCtx.strokeStyle = '#ffffff';
+        mapCtx.stroke();
+
+        // 内側のハイライト
+        mapCtx.beginPath();
+        mapCtx.arc(
+            cx - r * 0.25,
+            cy - r * 0.25,
+            r * 0.65,
+            Math.PI * 1.05,
+            Math.PI * 1.75
+        );
+        mapCtx.strokeStyle = 'rgba(255,255,255,0.35)';
+        mapCtx.lineWidth = Math.max(3, r * 0.05);
+        mapCtx.stroke();
+
+        // 数字
+        mapCtx.textAlign = 'center';
+        mapCtx.textBaseline = 'middle';
+
+        mapCtx.font = `900 ${Math.max(38, r * 1.15)}px "M PLUS Rounded 1c", sans-serif`;
+
+        // 数字の黒い影
+        mapCtx.shadowColor = 'rgba(0,0,0,0.65)';
+        mapCtx.shadowBlur = 6;
+        mapCtx.shadowOffsetX = 2;
+        mapCtx.shadowOffsetY = 3;
+
+        mapCtx.fillStyle = '#ffffff';
+        mapCtx.fillText(item.name, cx, cy);
+
+        mapCtx.shadowColor = 'transparent';
+        mapCtx.shadowBlur = 0;
+        mapCtx.shadowOffsetX = 0;
+        mapCtx.shadowOffsetY = 0;
+
+        // 円の下に説明
+        mapCtx.font = `900 ${Math.max(16, r * 0.30)}px "M PLUS Rounded 1c", sans-serif`;
+        mapCtx.fillStyle = '#ffffff';
+        mapCtx.strokeStyle = 'rgba(0,0,0,0.8)';
+        mapCtx.lineWidth = 4;
+
+        mapCtx.strokeText(item.name, cx, cy + r * 1.25);
+        mapCtx.fillText(item.name, cx, cy + r * 1.25);
+
+        mapCtx.restore();
+
+        return;
+    }
+
+    // ================================
+    // 既存のゲーム
+    // ================================
+
+    mapCtx.beginPath();
+    mapCtx.arc(cx, cy, r, 0, Math.PI * 2);
+    mapCtx.fillStyle = item.color || 'rgba(255, 255, 255, 0.12)';
+    mapCtx.fill();
+    mapCtx.lineWidth = 4;
+    mapCtx.strokeStyle = item.border || 'rgba(251, 191, 36, 0.8)';
+    mapCtx.stroke();
+
+    // 風船の場合、下の結び目を描画
+    if (currentMapKey === 'balloon') {
+        mapCtx.beginPath();
+        mapCtx.moveTo(cx - r * 0.2, cy + r);
+        mapCtx.lineTo(cx + r * 0.2, cy + r);
+        mapCtx.lineTo(cx, cy + r * 1.25);
+        mapCtx.closePath();
+        mapCtx.fillStyle = item.border || '#ffffff';
+        mapCtx.fill();
+    }
+
+    mapCtx.font = `${r * 0.9}px "M PLUS Rounded 1c", sans-serif`;
+    mapCtx.textAlign = 'center';
+    mapCtx.textBaseline = 'middle';
+    mapCtx.fillText(item.icon, cx, cy - r * 0.1);
+
+    mapCtx.font = `bold ${Math.max(12, r * 0.30)}px "M PLUS Rounded 1c"`;
+    mapCtx.fillStyle = '#ffffff';
+    mapCtx.shadowColor = 'rgba(0,0,0,0.8)';
+    mapCtx.shadowBlur = 4;
+    mapCtx.fillText(item.name, cx, cy + r * 0.65);
+    mapCtx.shadowBlur = 0;
+});
         }
 
         function createExplosion(x, y) {
