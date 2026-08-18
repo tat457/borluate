@@ -1070,14 +1070,101 @@ targets.forEach(item => {
         }
 
         function handleHit(x, y) {
-            sound.playHit();
-            createExplosion(x, y);
+    sound.playHit();
+    createExplosion(x, y);
 
-            const w = mapCanvas.width;
-            const h = mapCanvas.height;
-            const targets = MAP_DATASETS[currentMapKey];
+    const w = mapCanvas.width;
+    const h = mapCanvas.height;
 
-            let hitItem = null;
+    // ==========================================
+    // 🎯 ダーツゲーム
+    // ダーツボードそのものを判定する
+    // ==========================================
+    if (currentMapKey === 'darts') {
+        const cx = w / 2;
+        const cy = h / 2;
+        const minDim = Math.min(w, h);
+
+        const distance = Math.hypot(x - cx, y - cy);
+
+        const outerRadius = minDim * 0.42;
+        const yellowRadius = minDim * 0.31;
+        const greenRadius = minDim * 0.20;
+        const redRadius = minDim * 0.09;
+
+        let points = 0;
+        let zoneName = '';
+        let icon = '🎯';
+
+        if (distance <= redRadius) {
+            // 中心
+            points = 100;
+            zoneName = 'BULL！';
+            icon = '🎯';
+        } else if (distance <= greenRadius) {
+            // 緑
+            points = 50;
+            zoneName = '50点ゾーン！';
+            icon = '⭐';
+        } else if (distance <= yellowRadius) {
+            // 黄
+            points = 30;
+            zoneName = '30点ゾーン！';
+            icon = '💎';
+        } else if (distance <= outerRadius) {
+            // 青
+            points = 10;
+            zoneName = '10点ゾーン！';
+            icon = '🎈';
+        } else {
+            // ボード外
+            showFeedbackToast(false, 'はずれ！', 'ダーツボードをねらおう！');
+            sound.playWrong();
+            return;
+        }
+
+        score += points;
+        updateScoreDisplay();
+
+        showMagnifier(
+            x,
+            y,
+            icon,
+            zoneName,
+            `${points}てん ゲット！`
+        );
+
+        sound.playCorrect();
+
+        showFeedbackToast(
+            true,
+            zoneName,
+            `+${points}てん ゲット！`
+        );
+
+        return;
+    }
+
+    // ==========================================
+    // 🇯🇵🎈🔢 その他のゲーム
+    // ==========================================
+    const targets = MAP_DATASETS[currentMapKey];
+
+    let hitItem = null;
+
+    for (let item of targets) {
+        const cx = item.x * w;
+        const cy = item.y * h;
+        const r = item.radius * Math.min(w, h);
+        const dist = Math.hypot(x - cx, y - cy);
+
+        if (dist <= r) {
+            hitItem = item;
+            break;
+        }
+    }
+
+    // 以下は現在のコードをそのまま
             for (let item of targets) {
                 const cx = item.x * w;
                 const cy = item.y * h;
