@@ -825,7 +825,9 @@
                 }
             }
 
-　　targets.forEach(item => {
+　　        const targets = MAP_DATASETS[currentMapKey];
+
+        targets.forEach(item => {
     const cx = item.x * w;
     const cy = item.y * h;
     const r = item.radius * Math.min(w, h);
